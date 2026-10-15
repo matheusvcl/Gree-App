@@ -232,8 +232,8 @@ class _LocationsScreenState extends State<LocationsScreen> {
           ),
         ),
         itemCount: st.locations.length,
-        onReorder: (oldIdx, newIdx) {
-          if (newIdx > oldIdx) newIdx--;
+        onReorderItem: (oldIdx, newIdx) {
+          // o newIndex já vem ajustado para a remoção do item antigo
           final ids = st.locations.map((l) => l.id).toList();
           final id = ids.removeAt(oldIdx);
           ids.insert(newIdx, id);
