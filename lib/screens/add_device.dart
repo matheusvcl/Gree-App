@@ -14,18 +14,42 @@ class AddDeviceScreen extends StatefulWidget {
 }
 
 class _AddDeviceScreenState extends State<AddDeviceScreen> {
+  late final TextEditingController name;
+  late final TextEditingController room;
+  late final TextEditingController ssid;
+  late final TextEditingController pass;
+
+  @override
+  void initState() {
+    super.initState();
+    final st = widget.st;
+    name = TextEditingController(text: st.newDevName);
+    room = TextEditingController(text: st.newDevRoom);
+    ssid = TextEditingController(text: st.newDevWifi);
+    pass = TextEditingController(text: st.newDevPass);
+  }
+
+  @override
+  void dispose() {
+    name.dispose();
+    room.dispose();
+    ssid.dispose();
+    pass.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final st = widget.st;
     final p = context.palette();
     return ListView(padding: const EdgeInsets.fromLTRB(20, 4, 20, 140), children: [
-      _field(p, 'Nome do aparelho', st.newDevName, (v) => st.newDevName = v),
+      _field(p, 'Nome do aparelho', name, (v) => st.newDevName = v),
       const SizedBox(height: 12),
-      _field(p, 'Ambiente (ex.: Sala)', st.newDevRoom, (v) => st.newDevRoom = v),
+      _field(p, 'Ambiente (ex.: Sala)', room, (v) => st.newDevRoom = v),
       const SectionTitle('Rede Wi-Fi'),
-      _field(p, 'Nome da rede (SSID)', st.newDevWifi, (v) => st.newDevWifi = v),
+      _field(p, 'Nome da rede (SSID)', ssid, (v) => st.newDevWifi = v),
       const SizedBox(height: 12),
-      _field(p, 'Senha da rede', st.newDevPass, (v) => st.newDevPass = v, obscure: true),
+      _field(p, 'Senha da rede', pass, (v) => st.newDevPass = v, obscure: true),
       const SectionTitle('Padrões'),
       Text('Modo inicial', style: TextStyle(fontSize: 12, color: p.dim)),
       const SizedBox(height: 8),
@@ -63,11 +87,11 @@ class _AddDeviceScreenState extends State<AddDeviceScreen> {
     ]);
   }
 
-  Widget _field(AppPalette p, String hint, String value, ValueChanged<String> onChange, {bool obscure = false}) {
+  Widget _field(AppPalette p, String hint, TextEditingController controller, ValueChanged<String> onChange, {bool obscure = false}) {
     return TextField(
       onChanged: onChange,
       obscureText: obscure,
-      controller: TextEditingController(text: value),
+      controller: controller,
       style: TextStyle(color: p.text, fontSize: 14.5),
       decoration: InputDecoration(
         hintText: hint,

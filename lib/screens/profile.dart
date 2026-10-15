@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../theme.dart';
 import '../state.dart';
@@ -586,6 +587,45 @@ class EnergySetScreen extends StatefulWidget {
 class _EnergySetScreenState extends State<EnergySetScreen> {
   List<GeoPlace> results = [];
   bool busy = false;
+  bool searching = false;
+  Timer? _debounce;
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    super.dispose();
+  }
+
+  void _onQueryChanged(String q) {
+    _debounce?.cancel();
+    if (q.trim().isEmpty) {
+      setState(() => results = []);
+      return;
+    }
+    // sugestões ao vivo, com debounce para não martelar a busca
+    _debounce = Timer(const Duration(milliseconds: 350), () async {
+      setState(() => searching = true);
+      final r = await Remote.searchPlaces(q);
+      if (!mounted) return;
+      setState(() {
+        results = r;
+        searching = false;
+      });
+    });
+  }
+
+  void _searchNow(String q) {
+    _debounce?.cancel();
+    if (q.trim().isEmpty) return;
+    setState(() => searching = true);
+    Remote.searchPlaces(q).then((r) {
+      if (!mounted) return;
+      setState(() {
+        results = r;
+        searching = false;
+      });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -642,15 +682,18 @@ class _EnergySetScreenState extends State<EnergySetScreen> {
       Padding(
         padding: const EdgeInsets.symmetric(vertical: 10),
         child: TextField(
-          onSubmitted: (q) async {
-            final r = await Remote.searchPlaces(q);
-            setState(() => results = r);
-          },
+          onChanged: _onQueryChanged,
+          onSubmitted: _searchNow,
           style: TextStyle(color: p.text, fontSize: 13.5),
           decoration: InputDecoration(
             hintText: 'Buscar cidade (ex.: Niterói)',
             hintStyle: TextStyle(color: p.dimmer, fontSize: 13),
-            prefixIcon: Icon(Icons.search_rounded, size: 18, color: p.dim),
+            prefixIcon: searching
+                ? const Padding(
+                    padding: EdgeInsets.all(12),
+                    child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.accent)),
+                  )
+                : Icon(Icons.search_rounded, size: 18, color: p.dim),
             filled: true,
             fillColor: p.surface2,
             contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
