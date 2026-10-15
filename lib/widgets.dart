@@ -311,8 +311,12 @@ void showToast(BuildContext context, String msg) {
           builder: (_, v, child) => Opacity(opacity: v, child: child),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-            decoration: BoxDecoration(color: p.text, borderRadius: BorderRadius.circular(999)),
-            child: Text(msg, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: p.bg)),
+            decoration: BoxDecoration(
+              color: p.surface,
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: p.line),
+            ),
+            child: Text(msg, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: p.text)),
           ),
         ),
       ),
