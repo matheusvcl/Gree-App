@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 import '../theme.dart';
 import '../state.dart';
 import '../widgets.dart';
 import '../updater.dart';
+import '../version.dart';
 
 /* Atualizações: versão instalada, verificação manual e o histórico do app
    (docs/changelog/CHANGELOG.md embutido como asset). */
@@ -27,11 +27,10 @@ class _UpdatesScreenState extends State<UpdatesScreen> {
   }
 
   Future<void> _load() async {
-    final pi = await PackageInfo.fromPlatform();
     final raw = await DefaultAssetBundle.of(context).loadString('docs/changelog/CHANGELOG.md');
     if (!mounted) return;
     setState(() {
-      version = pi.version;
+      version = kAppVersion;
       sections = _parse(raw);
     });
   }

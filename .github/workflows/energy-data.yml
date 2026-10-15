@@ -20,6 +20,10 @@ jobs:
         with:
           ref: main # sempre em main (tags disparam em HEAD destacado)
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'

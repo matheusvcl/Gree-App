@@ -4,8 +4,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:open_filex/open_filex.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 import 'theme.dart';
+import 'version.dart';
 
 /* Sistema de update automático via GitHub Releases (repo privado + token de leitura).
    O token entra em tempo de compilação via --dart-define=UPDATE_TOKEN=... (scripts/release.sh).
@@ -50,10 +50,8 @@ class Updater {
         }
       }
       if (url.isEmpty) return null;
-      final pi = await PackageInfo.fromPlatform();
-      final curBuild = int.tryParse(pi.buildNumber) ?? 0;
-      final cmp = _cmpVersion(version, pi.version);
-      final newer = cmp > 0 || (cmp == 0 && build > curBuild); // versão manda; build só desempata
+      final cmp = _cmpVersion(version, kAppVersion);
+      final newer = cmp > 0; // versionamento só por versão (v1.0.3)
       if (!newer) return null;
       return UpdateInfo(version: version, build: build, url: url, notes: (j['body'] ?? '') as String);
     } catch (_) {

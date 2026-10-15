@@ -9,9 +9,10 @@ set -euo pipefail
 VER="${1:?use: ./scripts/release.sh 1.0.3}"
 cd "$(dirname "$0")/.."
 
-# mantém o pubspec na versão do release (a tela de versão sempre correta)
+# mantém o pubspec e a versão do app juntos (a tela de versão sempre correta)
 sed -i "s/^version: .*/version: $VER/" pubspec.yaml
-git add pubspec.yaml
+sed -i "s/const String kAppVersion = .*/const String kAppVersion = '$VER';/" lib/version.dart
+git add pubspec.yaml lib/version.dart
 git -c gpg.program="C:/Program Files/Git/usr/bin/gpg.exe" commit -m "release: Gree App v$VER" -m "Bump de versão para $VER." || true
 git push origin main
 
