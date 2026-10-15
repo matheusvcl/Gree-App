@@ -726,27 +726,19 @@ class _EnergySetScreenState extends State<EnergySetScreen> {
       AppCard(
         child: Column(children: [
           if (ufDistributors[st.uf]?.isNotEmpty ?? false)
-            Row(children: [
-              Expanded(
-                child: Text('Distribuidora', style: TextStyle(fontSize: 12, color: p.dim)),
+            InkWell(
+              onTap: () => _pickDistributor(context, st, p),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Row(children: [
+                  Expanded(child: Text('Distribuidora', style: TextStyle(fontSize: 12, color: p.dim))),
+                  Text(st.distributor.isEmpty ? 'Selecionar' : st.distributor,
+                      style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: p.text)),
+                  const SizedBox(width: 4),
+                  Icon(Icons.keyboard_arrow_down_rounded, size: 17, color: p.dim),
+                ]),
               ),
-              DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  value: st.distributor.isNotEmpty ? st.distributor : null,
-                  dropdownColor: p.surface,
-                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: p.text),
-                  items: [
-                    for (final d in ufDistributors[st.uf] ?? [])
-                      DropdownMenuItem(value: d, child: Text(d, style: TextStyle(fontSize: 12, color: p.text))),
-                  ],
-                  onChanged: (v) async {
-                    if (v == null) return;
-                    st.distributor = v;
-                    await st.resolveEnergy();
-                  },
-                ),
-              ),
-            ]),
+            ),
           _row('Tarifa base (TE+TUSD)', st.baseTariff > 0 ? '${money3(st.baseTariff)}/kWh' : '—'),
           _row('Bandeira do mês',
               st.flagName.isEmpty ? '—' : '${st.flagName} · +${money3(st.flagSurcharge)}/kWh', dot: flagColor),
@@ -806,6 +798,38 @@ class _EnergySetScreenState extends State<EnergySetScreen> {
         Expanded(child: Text(label, style: TextStyle(fontSize: 12, color: p.dim))),
         Text(value, style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: p.text)),
       ]),
+    );
+  }
+
+  void _pickDistributor(BuildContext context, AppState st, AppPalette p) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: p.surface,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (_) => SafeArea(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          const SizedBox(height: 10),
+          Container(width: 42, height: 4, decoration: BoxDecoration(color: p.line, borderRadius: BorderRadius.circular(2))),
+          const SizedBox(height: 8),
+          for (final d in ufDistributors[st.uf] ?? [])
+            ListTile(
+              onTap: () async {
+                st.distributor = d;
+                await st.resolveEnergy();
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  showToast(context, 'Distribuidora: $d');
+                }
+              },
+              leading: Icon(
+                  st.distributor == d ? Icons.check_circle_rounded : Icons.circle_outlined,
+                  color: st.distributor == d ? AppColors.accent : p.dimmer,
+                  size: 19),
+              title: Text(d, style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: p.text)),
+            ),
+          const SizedBox(height: 8),
+        ]),
+      ),
     );
   }
 }
