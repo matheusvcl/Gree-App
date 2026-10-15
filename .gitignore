@@ -66,3 +66,6 @@ mockup/
 
 # token do worker (nunca versionar)
 worker/.cloudflare-token
+
+# cache local do wrangler
+worker/.wrangler/
