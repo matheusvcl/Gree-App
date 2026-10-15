@@ -128,7 +128,7 @@ Future<void> showUpdateDialog(BuildContext context, UpdateInfo info) async {
                 Text('Atualização disponível',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: palette.text)),
                 const SizedBox(height: 6),
-                Text('${info.label} · build ${info.build}',
+                Text(info.label,
                     style: TextStyle(fontSize: 11.5, color: palette.dim)),
                 if (info.notes.trim().isNotEmpty) ...[
                   const SizedBox(height: 10),

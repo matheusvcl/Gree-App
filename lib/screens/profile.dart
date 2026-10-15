@@ -70,16 +70,7 @@ class ProfileScreen extends StatelessWidget {
           AppChip(label: 'Escuro', on: st.themeMode == 'dark', small: true, onTap: () => st.setTheme('dark')),
         ]),
       ),
-      _row(context, Icons.system_update_rounded, 'Atualizações', 'Verificar nova versão', () async {
-        showToast(context, 'Verificando atualizações…');
-        final info = await Updater.check();
-        if (!context.mounted) return;
-        if (info == null) {
-          showToast(context, 'Você está na última versão');
-        } else {
-          showUpdateDialog(context, info);
-        }
-      }),
+      _row(context, Icons.system_update_rounded, 'Atualizações', 'Versão, verificação e o que mudou', () => st.go('updates')),
       _row(context, Icons.apps_rounded, 'Ícones', 'Ícone na tela inicial e no app drawer', () => st.go('icons')),
       _row(context, Icons.notifications_none_rounded, 'Notificações', 'Alertas e avisos', () => st.go('notifications')),
       _row(context, Icons.bolt_outlined, 'Moeda e energia', 'Tarifa e estimativas', () => st.go('energyset')),

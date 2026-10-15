@@ -13,6 +13,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 jobs:
   build:
@@ -32,6 +33,18 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+          cache: true
+
+      # cache de build: restaura o anterior, e cada run salva um novo
+      # (o passo final apaga os antigos, mantendo só o mais recente)
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ github.run_id }}
+          restore-keys: |
+            gradle-
 
       - name: Versão
         id: ver
@@ -65,7 +78,27 @@ jobs:
           flutter pub get
           flutter build apk --release \
             --build-name=${{ steps.ver.outputs.version }} \
+            --build-number=$(date +%s) \
             --dart-define=UPDATE_TOKEN="$UPDATE_TOKEN"
+
+      - name: Notas do changelog
+        run: |
+          awk -v ver="${{ steps.ver.outputs.version }}" '
+            /^## / {
+              key = "## v" ver
+              if (index($0, key) == 1) {
+                rest = substr($0, length(key) + 1, 1)
+                if (rest !~ /[0-9.]/) { f = 1; next }
+              }
+              f = 0
+              next
+            }
+            f { print }
+          ' docs/changelog/CHANGELOG.md > /tmp/notes.md
+          if [ ! -s /tmp/notes.md ]; then
+            echo "::error::Seção '## v${{ steps.ver.outputs.version }}' não existe em docs/changelog/CHANGELOG.md — atualize o changelog antes de lançar."
+            exit 1
+          fi
 
       - name: Publicar release
         env:
@@ -76,5 +109,13 @@ jobs:
             "Gree-v${{ steps.ver.outputs.version }}.apk" \
             --repo "$GITHUB_REPOSITORY" \
             --title "v${{ steps.ver.outputs.version }}" \
-            --notes "Atualização automática" \
+            --notes-file /tmp/notes.md \
             --latest
+
+      - name: Limpar caches antigos
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh cache list --repo "$GITHUB_REPOSITORY" --key gradle- --json key --jq '.[].key' \
+            | grep -v "^gradle-${{ github.run_id }}$" \
+            | xargs -r -I{} gh cache delete {} --repo "$GITHUB_REPOSITORY" || true

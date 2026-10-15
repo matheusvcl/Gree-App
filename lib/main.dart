@@ -9,6 +9,7 @@ import 'screens/control.dart';
 import 'screens/schedule.dart';
 import 'screens/energy.dart';
 import 'screens/profile.dart';
+import 'screens/updates.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -60,6 +61,7 @@ const INTERNAL = {
   'energyset': 'Moeda e energia',
   'integrations': 'Integrações',
   'icons': 'Ícones',
+  'updates': 'Atualizações',
 };
 
 class AppShell extends StatefulWidget {
@@ -102,6 +104,7 @@ class _AppShellState extends State<AppShell> {
       'energyset' => EnergySetScreen(st: st),
       'integrations' => IntegrationsScreen(st: st),
       'icons' => IconsScreen(st: st),
+      'updates' => UpdatesScreen(st: st),
       _ => HomeScreen(st: st),
     };
 
