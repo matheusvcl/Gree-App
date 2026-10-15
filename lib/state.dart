@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /* ================= modelos (espelham o mockup) ================= */
@@ -78,6 +79,7 @@ class AppState extends ChangeNotifier {
   String screen = 'home';
   String themeMode = 'dark'; // dark | light
   String unit = 'C'; // C | F
+  String appIcon = 'default'; // default | light | accent | mono
   int activeLoc = 1;
   String room = 'Todos';
   String? selected;
@@ -140,6 +142,7 @@ class AppState extends ChangeNotifier {
         'screen': screen,
         'themeMode': themeMode,
         'unit': unit,
+        'appIcon': appIcon,
         'activeLoc': activeLoc,
         'room': room,
         'selected': selected,
@@ -158,6 +161,7 @@ class AppState extends ChangeNotifier {
     screen = j['screen'] ?? 'home';
     themeMode = j['themeMode'] ?? 'dark';
     unit = j['unit'] ?? 'C';
+    appIcon = j['appIcon'] ?? 'default';
     activeLoc = j['activeLoc'] ?? 1;
     room = j['room'] ?? 'Todos';
     selected = j['selected'];
@@ -194,6 +198,18 @@ class AppState extends ChangeNotifier {
   void setTheme(String mode) {
     themeMode = mode;
     _changed();
+  }
+
+  static const _iconChannel = MethodChannel('gree/icon');
+
+  Future<void> setAppIcon(String name) async {
+    appIcon = name;
+    _changed();
+    try {
+      await _iconChannel.invokeMethod('set', {'name': name});
+    } catch (_) {
+      // em testes/desktop o canal não existe; a escolha fica salva mesmo assim
+    }
   }
 
   void toggleTheme() => setTheme(themeMode == 'dark' ? 'light' : 'dark');

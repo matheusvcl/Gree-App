@@ -59,6 +59,7 @@ const INTERNAL = {
   'notifications': 'Notificações',
   'energyset': 'Moeda e energia',
   'integrations': 'Integrações',
+  'icons': 'Ícones',
 };
 
 class AppShell extends StatefulWidget {
@@ -100,6 +101,7 @@ class _AppShellState extends State<AppShell> {
       'notifications' => NotificationsScreen(st: st),
       'energyset' => EnergySetScreen(st: st),
       'integrations' => IntegrationsScreen(st: st),
+      'icons' => IconsScreen(st: st),
       _ => HomeScreen(st: st),
     };
 

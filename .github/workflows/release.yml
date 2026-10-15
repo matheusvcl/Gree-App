@@ -71,8 +71,9 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          mv build/app/outputs/flutter-apk/app-release.apk "Gree-v${{ steps.ver.outputs.version }}.apk"
           gh release create "v${{ steps.ver.outputs.version }}" \
-            build/app/outputs/flutter-apk/app-release.apk \
+            "Gree-v${{ steps.ver.outputs.version }}.apk" \
             --repo "$GITHUB_REPOSITORY" \
             --title "v${{ steps.ver.outputs.version }}" \
             --notes "Atualização automática" \

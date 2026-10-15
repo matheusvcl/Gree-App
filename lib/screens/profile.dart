@@ -80,6 +80,7 @@ class ProfileScreen extends StatelessWidget {
           showUpdateDialog(context, info);
         }
       }),
+      _row(context, Icons.apps_rounded, 'Ícones', 'Ícone na tela inicial e no app drawer', () => st.go('icons')),
       _row(context, Icons.notifications_none_rounded, 'Notificações', 'Alertas e avisos', () => st.go('notifications')),
       _row(context, Icons.bolt_outlined, 'Moeda e energia', 'Tarifa e estimativas', () => st.go('energyset')),
       _row(context, Icons.link_rounded, 'Integrações', 'Assistentes e serviços', () => st.go('integrations'),
@@ -649,6 +650,63 @@ class IntegrationsScreen extends StatelessWidget {
             }),
           ]),
         ),
+    ]);
+  }
+}
+
+/* ================= seleção de ícone do app ================= */
+class IconsScreen extends StatelessWidget {
+  final AppState st;
+  const IconsScreen({super.key, required this.st});
+
+  static const variants = [
+    ('default', 'Escuro', 'assets/icon/preview-default.png', false),
+    ('light', 'Claro', 'assets/icon/preview-light.png', false),
+    ('accent', 'Azul', 'assets/icon/preview-accent.png', false),
+    ('mono', 'Mono', 'assets/icon/preview-mono.png', true),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette();
+    return ListView(padding: const EdgeInsets.fromLTRB(20, 4, 20, 140), children: [
+      Text('Escolha o ícone exibido na tela inicial e na lista de aplicativos. A troca é imediata.',
+          style: TextStyle(fontSize: 12.5, color: p.dim, height: 1.5)),
+      const SizedBox(height: 16),
+      Wrap(spacing: 14, runSpacing: 14, children: [
+        for (final v in variants)
+          GestureDetector(
+            onTap: () async {
+              await st.setAppIcon(v.$1);
+              if (context.mounted) showToast(context, 'Ícone atualizado: ${v.$2}');
+            },
+            child: Container(
+              width: 104,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: p.surface,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                    color: st.appIcon == v.$1 ? AppColors.accent : p.line,
+                    width: st.appIcon == v.$1 ? 2 : 1),
+              ),
+              child: Column(children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: Container(
+                    color: v.$4 ? const Color(0xFF0C0D0F) : null,
+                    child: Image.asset(v.$3, width: 60, height: 60, fit: BoxFit.cover),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(v.$2, style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: p.text)),
+                const SizedBox(height: 4),
+                Icon(st.appIcon == v.$1 ? Icons.check_circle_rounded : Icons.circle_outlined,
+                    size: 15, color: st.appIcon == v.$1 ? AppColors.accent : p.dimmer),
+              ]),
+            ),
+          ),
+      ]),
     ]);
   }
 }
