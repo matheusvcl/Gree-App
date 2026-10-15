@@ -1,0 +1,79 @@
+name: release
+
+# Dispara com tag (git tag v1.0.1 && git push --tags)
+# ou manualmente: gh workflow run release.yml -f version=1.0.1
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Versão (ex.: 1.0.1)'
+        required: true
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Versão
+        id: ver
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            V="${{ inputs.version }}"
+          else
+            V="${GITHUB_REF_NAME#v}"
+          fi
+          echo "version=$V" >> "$GITHUB_OUTPUT"
+
+      - name: Keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 -d > android/app/gree-release.jks
+          cat > android/key.properties <<EOF
+          storeFile=gree-release.jks
+          storePassword=$KEYSTORE_PASSWORD
+          keyAlias=$KEY_ALIAS
+          keyPassword=$KEY_PASSWORD
+          EOF
+
+      - name: Build APK
+        env:
+          UPDATE_TOKEN: ${{ secrets.UPDATE_TOKEN }}
+        run: |
+          flutter pub get
+          flutter build apk --release \
+            --build-name=${{ steps.ver.outputs.version }} \
+            --dart-define=UPDATE_TOKEN="$UPDATE_TOKEN"
+
+      - name: Publicar release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "v${{ steps.ver.outputs.version }}" \
+            build/app/outputs/flutter-apk/app-release.apk \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "v${{ steps.ver.outputs.version }}" \
+            --notes "Atualização automática" \
+            --latest
