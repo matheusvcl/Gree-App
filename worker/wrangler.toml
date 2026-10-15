@@ -1,0 +1,8 @@
+name = "gree-family"
+main = "src/index.js"
+compatibility_date = "2025-01-01"
+
+# preenchido pelo deploy.sh após criar o namespace KV
+[[kv_namespaces]]
+binding = "GREE_FAMILY"
+id = "3492e0b01c874fed8e466f0cedfd211b"

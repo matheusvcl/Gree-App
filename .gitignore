@@ -63,3 +63,6 @@ Gree+/
 # fora do repo (ferramentas e mockup)
 re/
 mockup/
+
+# token do worker (nunca versionar)
+worker/.cloudflare-token

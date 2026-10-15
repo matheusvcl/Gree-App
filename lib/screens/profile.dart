@@ -3,6 +3,8 @@ import '../theme.dart';
 import '../state.dart';
 import '../widgets.dart';
 import '../updater.dart';
+import '../avatars.dart';
+import '../services/remote.dart';
 
 /* ================= avatar ================= */
 class UserAvatar extends StatelessWidget {
@@ -12,17 +14,19 @@ class UserAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = switch (avatar) {
-      'p1' => (const Color(0xFFF4A261), const Color(0xFF5A3E2B)),
-      'p2' => (const Color(0xFF5B7FA6), const Color(0xFF2B2D42)),
-      _ => (const Color(0xFFD98C9A), const Color(0xFF5A3E2B)),
-    };
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(color: colors.$1, shape: BoxShape.circle),
-      alignment: Alignment.center,
-      child: Icon(Icons.person_rounded, size: size * .6, color: colors.$2),
+    return ClipOval(
+      child: Image.asset(
+        'assets/avatars/$avatar.png',
+        width: size,
+        height: size,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => Container(
+          width: size,
+          height: size,
+          decoration: const BoxDecoration(color: Color(0xFF5B7FA6), shape: BoxShape.circle),
+          child: Icon(Icons.person_rounded, size: size * .6, color: const Color(0xFF2B2D42)),
+        ),
+      ),
     );
   }
 }
@@ -117,6 +121,7 @@ class EditProfileScreen extends StatelessWidget {
       const SectionTitle('Nome'),
       TextField(
         controller: name,
+        onChanged: (v) => st.profileDraftName = v,
         style: TextStyle(color: p.text, fontSize: 15),
         decoration: InputDecoration(
           filled: true,
@@ -127,37 +132,30 @@ class EditProfileScreen extends StatelessWidget {
         ),
       ),
       const SectionTitle('Avatar'),
-      Wrap(spacing: 12, runSpacing: 12, children: [
-        for (final av in const ['p1', 'p2', 'p3'])
-          GestureDetector(
-            onTap: () {
-              me.avatar = av;
-              st.go('editprofile');
-            },
-            child: Container(
-              padding: const EdgeInsets.all(2),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: me.avatar == av ? Border.all(color: Colors.white, width: 3) : null,
+      for (final g in avatarGroups.entries) ...[
+        Text(g.key,
+            style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: p.dimmer, letterSpacing: .4)),
+        const SizedBox(height: 8),
+        Wrap(spacing: 12, runSpacing: 12, children: [
+          for (final id in g.value)
+            GestureDetector(
+              onTap: () {
+                me.avatar = id;
+                st.go('editprofile');
+              },
+              child: Container(
+                padding: const EdgeInsets.all(2),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: me.avatar == id ? Border.all(color: Colors.white, width: 3) : null,
+                ),
+                child: UserAvatar(avatar: id, size: 52),
               ),
-              child: UserAvatar(avatar: av, size: 52),
             ),
-          ),
-      ]),
+        ]),
+        const SizedBox(height: 16),
+      ],
       const SizedBox(height: 26),
-      GestureDetector(
-        onTap: () {
-          if (name.text.trim().isNotEmpty) me.name = name.text.trim();
-          st.go('profile');
-          showToast(context, 'Perfil atualizado');
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 15),
-          decoration: BoxDecoration(color: AppColors.accent, borderRadius: BorderRadius.circular(18)),
-          alignment: Alignment.center,
-          child: const Text('Salvar', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: Colors.white)),
-        ),
-      ),
     ]);
   }
 }
@@ -306,7 +304,7 @@ class _LocationsScreenState extends State<LocationsScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(color: p.surface2, borderRadius: BorderRadius.circular(12), border: Border.all(color: p.line)),
-                        child: Icon(Icons.delete_rounded, size: 15, color: p.text),
+                        child: Icon(Icons.delete_rounded, size: 15, color: AppColors.danger),
                       ),
                     ),
                 ]),
@@ -405,9 +403,10 @@ class FamilyScreen extends StatelessWidget {
           ),
         ]),
       ),
-      const SizedBox(height: 8),
-      Text('Cada usuário guarda um apelido, avatar e as temperaturas próprias por modo.',
-          style: TextStyle(fontSize: 12, color: p.dim, height: 1.5)),
+      if (st.famOn) ...[
+        const SizedBox(height: 8),
+        Text('Cada usuário guarda um apelido, avatar e as temperaturas próprias por modo.',
+            style: TextStyle(fontSize: 12, color: p.dim, height: 1.5)),
       const SizedBox(height: 14),
       Row(children: [
         Expanded(
@@ -466,9 +465,10 @@ class FamilyScreen extends StatelessWidget {
                     }
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
-                    decoration: BoxDecoration(color: p.surface2, borderRadius: BorderRadius.circular(10), border: Border.all(color: p.line)),
-                    child: Text('Excluir', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600, color: p.text)),
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                        color: p.surface2, borderRadius: BorderRadius.circular(12), border: Border.all(color: p.line)),
+                    child: Icon(Icons.delete_rounded, size: 15, color: AppColors.danger),
                   ),
                 ),
             ]),
@@ -496,6 +496,44 @@ class FamilyScreen extends StatelessWidget {
             ]),
           ]),
         ),
+        const SizedBox(height: 12),
+        AppCard(
+          child: Row(children: [
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text('Código de convite', style: TextStyle(fontSize: 12, color: p.dim)),
+                const SizedBox(height: 2),
+                Text(st.familyCode,
+                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: p.text, letterSpacing: 2)),
+              ]),
+            ),
+          ]),
+        ),
+        const SizedBox(height: 8),
+        InviteQr(code: st.familyCode),
+        const SizedBox(height: 8),
+        TextField(
+          onSubmitted: (v) async {
+            if (await st.joinFamily(v)) {
+              showToast(context, 'Você entrou na família');
+            } else {
+              showToast(context, 'Código inválido — são 6 caracteres');
+            }
+            st.go('family');
+          },
+          style: TextStyle(color: p.text, fontSize: 13.5),
+          decoration: InputDecoration(
+            hintText: 'Entrar em uma família com o código',
+            hintStyle: TextStyle(color: p.dimmer, fontSize: 12.5),
+            prefixIcon: Icon(Icons.login_rounded, size: 16, color: p.dim),
+            filled: true,
+            fillColor: p.surface2,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: p.line)),
+          ),
+        ),
+      ],
     ]);
   }
 }
@@ -537,51 +575,152 @@ class NotificationsScreen extends StatelessWidget {
   }
 }
 
-class EnergySetScreen extends StatelessWidget {
+class EnergySetScreen extends StatefulWidget {
   final AppState st;
   const EnergySetScreen({super.key, required this.st});
 
   @override
+  State<EnergySetScreen> createState() => _EnergySetScreenState();
+}
+
+class _EnergySetScreenState extends State<EnergySetScreen> {
+  List<GeoPlace> results = [];
+  bool busy = false;
+
+  @override
   Widget build(BuildContext context) {
+    final st = widget.st;
     final p = context.palette();
+    final flagColor = switch (st.flagName) {
+      'Amarela' => AppColors.warn,
+      'Vermelha Patamar 1' || 'Vermelha P1' => AppColors.danger,
+      'Vermelha Patamar 2' || 'Vermelha P2' => AppColors.danger,
+      _ => AppColors.ok,
+    };
+    String money3(double v) => 'R\$ ${v.toStringAsFixed(3).replaceAll('.', ',')}';
+
     return ListView(padding: const EdgeInsets.fromLTRB(20, 4, 20, 140), children: [
-      const SectionTitle('Tarifa de energia'),
+      const SectionTitle('Localização'),
       AppCard(
         child: Row(children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(color: p.surface2, borderRadius: BorderRadius.circular(14)),
+            child: const Icon(Icons.location_on_outlined, size: 20, color: AppColors.accent),
+          ),
+          const SizedBox(width: 13),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('R\$ ${st.tariff.toStringAsFixed(2).replaceAll('.', ',')} / kWh',
-                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: p.text)),
-              const SizedBox(height: 3),
-              Text('A tarifa padrão varia por distribuidora. Consulte sua conta de luz.',
-                  style: TextStyle(fontSize: 11, color: p.dim, height: 1.5)),
+              Text(st.city.isEmpty ? 'Sem local definido' : '${st.city}/${st.uf}',
+                  style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: p.text)),
+              const SizedBox(height: 2),
+              Text('Detecta a distribuidora e a tarifa da sua cidade',
+                  style: TextStyle(fontSize: 11, color: p.dim)),
             ]),
           ),
-          const SizedBox(width: 10),
-          GestureDetector(
-            onTap: () {
-              st.tariff = double.parse((st.tariff + 0.1).toStringAsFixed(2));
-              st.go('energyset');
+          AppChip(
+            label: busy ? 'Buscando…' : 'Usar localização',
+            on: true,
+            small: true,
+            onTap: busy
+                ? null
+                : () async {
+                    setState(() => busy = true);
+                    final place = await Remote.deviceLocation();
+                    setState(() => busy = false);
+                    if (place != null) {
+                      await st.applyPlace(place);
+                      if (context.mounted) showToast(context, 'Local detectado: ${place.city}/${place.uf}');
+                    } else if (context.mounted) {
+                      showToast(context, 'Localização negada — busque a cidade abaixo');
+                    }
+                  },
+          ),
+        ]),
+      ),
+      Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child: TextField(
+          onSubmitted: (q) async {
+            final r = await Remote.searchPlaces(q);
+            setState(() => results = r);
+          },
+          style: TextStyle(color: p.text, fontSize: 13.5),
+          decoration: InputDecoration(
+            hintText: 'Buscar cidade (ex.: Niterói)',
+            hintStyle: TextStyle(color: p.dimmer, fontSize: 13),
+            prefixIcon: Icon(Icons.search_rounded, size: 18, color: p.dim),
+            filled: true,
+            fillColor: p.surface2,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: p.line)),
+          ),
+        ),
+      ),
+      for (final r in results)
+        AppCard(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          child: InkWell(
+            onTap: () async {
+              await st.applyPlace(r);
+              setState(() => results = []);
+              if (context.mounted) showToast(context, 'Local definido: ${r.city}/${r.uf}');
             },
-            child: Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(color: p.surface2, shape: BoxShape.circle, border: Border.all(color: p.line)),
-              child: Icon(Icons.add_rounded, size: 17, color: p.text),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              child: Row(children: [
+                const Icon(Icons.place_outlined, size: 17, color: AppColors.accent),
+                const SizedBox(width: 10),
+                Expanded(
+                    child: Text('${r.city}/${r.uf}', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: p.text))),
+                Icon(Icons.chevron_right_rounded, size: 16, color: p.dimmer),
+              ]),
             ),
           ),
-          const SizedBox(width: 8),
-          GestureDetector(
-            onTap: () {
-              st.tariff = double.parse((st.tariff - 0.1).clamp(0.1, 9).toStringAsFixed(2));
-              st.go('energyset');
-            },
-            child: Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(color: p.surface2, shape: BoxShape.circle, border: Border.all(color: p.line)),
-              child: Icon(Icons.remove_rounded, size: 17, color: p.text),
+        ),
+      const SectionTitle('Energia'),
+      AppCard(
+        child: Column(children: [
+          if (ufDistributors[st.uf]?.isNotEmpty ?? false)
+            Row(children: [
+              Expanded(
+                child: Text('Distribuidora', style: TextStyle(fontSize: 12, color: p.dim)),
+              ),
+              DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: st.distributor.isNotEmpty ? st.distributor : null,
+                  dropdownColor: p.surface,
+                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: p.text),
+                  items: [
+                    for (final d in ufDistributors[st.uf] ?? [])
+                      DropdownMenuItem(value: d, child: Text(d, style: TextStyle(fontSize: 12, color: p.text))),
+                  ],
+                  onChanged: (v) async {
+                    if (v == null) return;
+                    st.distributor = v;
+                    await st.resolveEnergy();
+                  },
+                ),
+              ),
+            ]),
+          _row('Tarifa base (TE+TUSD)', st.baseTariff > 0 ? '${money3(st.baseTariff)}/kWh' : '—'),
+          _row('Bandeira do mês',
+              st.flagName.isEmpty ? '—' : '${st.flagName} · +${money3(st.flagSurcharge)}/kWh', dot: flagColor),
+          const Divider(height: 20),
+          Row(children: [
+            Expanded(
+              child: Text('Tarifa total estimada',
+                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: p.dim)),
             ),
+            Text('${money3(st.tariff)}/kWh',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: p.text)),
+          ]),
+          const SizedBox(height: 6),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text('Calculado automaticamente pela ANEEL · atualizado em ${DateTime.now().day.toString().padLeft(2, '0')}/${DateTime.now().month.toString().padLeft(2, '0')}/${DateTime.now().year}',
+                style: TextStyle(fontSize: 10, color: p.dimmer)),
           ),
         ]),
       ),
@@ -610,6 +749,21 @@ class EnergySetScreen extends StatelessWidget {
         ),
       ]),
     ]);
+  }
+
+  Widget _row(String label, String value, {Color? dot}) {
+    final p = context.palette();
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(children: [
+        if (dot != null) ...[
+          Container(width: 8, height: 8, decoration: BoxDecoration(color: dot, shape: BoxShape.circle)),
+          const SizedBox(width: 8),
+        ],
+        Expanded(child: Text(label, style: TextStyle(fontSize: 12, color: p.dim))),
+        Text(value, style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: p.text)),
+      ]),
+    );
   }
 }
 

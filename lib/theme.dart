@@ -115,3 +115,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
 extension PaletteX on BuildContext {
   AppPalette palette() => Theme.of(this).extension<AppPalette>()!;
 }
+
+/* cor de destaque por modo: Aquecer = laranja, os demais = azul */
+Color modeAccent(String mode) => mode == 'heat' ? AppColors.heat : AppColors.accent;
+Color modeSoft(String mode) => mode == 'heat' ? const Color(0x24FF9166) : AppColors.accentSoft;

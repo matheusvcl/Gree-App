@@ -8,6 +8,7 @@ class TempDial extends StatefulWidget {
   final String unit;
   final String sub; // ex.: "Resfriar · Silencioso"
   final String ambient; // ex.: "Ambiente 27°C · Umidade 52%"
+  final Color color; // cor do modo (laranja no aquecer)
   final ValueChanged<int> onChanged;
   const TempDial({
     super.key,
@@ -17,6 +18,7 @@ class TempDial extends StatefulWidget {
     required this.unit,
     required this.sub,
     required this.ambient,
+    this.color = const Color(0xFF4EA8FF),
     required this.onChanged,
   });
 
@@ -58,7 +60,8 @@ class _TempDialState extends State<TempDial> with SingleTickerProviderStateMixin
   Widget build(BuildContext context) {
     final p = context.palette();
     return LayoutBuilder(builder: (_, c) {
-      final size = Size(c.maxWidth, c.maxWidth);
+      final side = [c.maxWidth, c.maxHeight].reduce((a, b) => a < b ? a : b);
+      final size = Size(side, side); // quadrado que cabe na caixa
       return GestureDetector(
         onPanStart: (d) => _fromPoint(d.localPosition, size),
         onPanUpdate: (d) => _fromPoint(d.localPosition, size),
@@ -72,7 +75,7 @@ class _TempDialState extends State<TempDial> with SingleTickerProviderStateMixin
               painter: _DialPainter(
                 frac: _frac,
                 track: p.surface2,
-                arc: AppColors.accent,
+                arc: widget.color,
                 handle: Colors.white,
               ),
             ),

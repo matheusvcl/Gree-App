@@ -1,7 +1,10 @@
 import 'dart:convert';
+import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'services/remote.dart';
+import 'services/family_sync.dart';
 
 /* ================= modelos (espelham o mockup) ================= */
 class Device {
@@ -11,13 +14,15 @@ class Device {
   String mode; // auto cool heat dry fan
   String swing;
   bool locked;
-  Device({required this.id, required this.name, required this.room, this.type = 'ar', this.on = false, this.temp = 22, this.fan = 2, this.mode = 'cool', this.swing = 'Fixo', this.locked = false});
+  String wifi; // rede do aparelho
+  Device({required this.id, required this.name, required this.room, this.type = 'ar', this.on = false, this.temp = 22, this.fan = 2, this.mode = 'cool', this.swing = 'Fixo', this.locked = false, this.wifi = ''});
 
-  Map<String, dynamic> toJson() => {'id': id, 'name': name, 'room': room, 'type': type, 'on': on, 'temp': temp, 'fan': fan, 'mode': mode, 'swing': swing, 'locked': locked};
+  Map<String, dynamic> toJson() => {'id': id, 'name': name, 'room': room, 'type': type, 'on': on, 'temp': temp, 'fan': fan, 'mode': mode, 'swing': swing, 'locked': locked, 'wifi': wifi};
   factory Device.fromJson(Map<String, dynamic> j) => Device(
       id: j['id'], name: j['name'], room: j['room'], type: j['type'] ?? 'ar',
       on: j['on'] ?? false, temp: j['temp'] ?? 22, fan: j['fan'] ?? 2,
-      mode: j['mode'] ?? 'cool', swing: j['swing'] ?? 'Fixo', locked: j['locked'] ?? false);
+      mode: j['mode'] ?? 'cool', swing: j['swing'] ?? 'Fixo', locked: j['locked'] ?? false,
+      wifi: j['wifi'] ?? '');
 }
 
 class Schedule {
@@ -76,43 +81,112 @@ class FamilyUser {
 }
 
 class AppState extends ChangeNotifier {
+  AppState({bool demo = false}) {
+    if (demo) {
+      onboarded = true;
+      locations = [
+        Place(id: 1, name: 'Casa', rooms: ['Sala', 'Quarto', 'Escritório']),
+        Place(id: 2, name: 'Trabalho', rooms: ['Reunião', 'Suíte']),
+      ];
+      devices = [
+        Device(id: 'sala', name: 'Ar da Sala', room: 'Sala', temp: 22, mode: 'cool', fan: 2),
+        Device(id: 'quarto', name: 'Ar do Quarto', room: 'Quarto', temp: 24, mode: 'heat', fan: 1),
+        Device(id: 'escritorio', name: 'Ar do Escritório', room: 'Escritório', temp: 20, mode: 'cool', fan: 3, on: true),
+        Device(id: 'reuniao', name: 'Ar da Reunião', room: 'Reunião', temp: 23, mode: 'auto', fan: 2),
+      ];
+      schedules = [
+        Schedule(id: 1, name: 'Acordar', cmd: 'on', mode: 'cool', hour: 6, minute: 30, temp: 22, days: [1, 2, 3, 4, 5]),
+        Schedule(id: 2, name: 'Sair', cmd: 'off', hour: 8, minute: 30, days: [1, 2, 3, 4, 5]),
+        Schedule(id: 3, name: 'Chegar', cmd: 'on', mode: 'auto', hour: 18, minute: 0, temp: 23, days: [1, 2, 3, 4, 5]),
+        Schedule(id: 4, name: 'Dormir', cmd: 'on', mode: 'heat', hour: 22, minute: 45, temp: 25, days: [0, 1, 2, 3, 4, 5, 6]),
+      ];
+      famOn = true;
+      users = [
+        FamilyUser(id: 1, name: 'Matheus', avatar: 'p1', role: 'admin', rooms: ['Sala', 'Quarto', 'Escritório']),
+        FamilyUser(id: 2, name: 'Filha', avatar: 'p3', rooms: ['Quarto']),
+      ];
+    }
+  }
+
+  bool onboarded = false; // false = primeira abertura (onboarding)
   String screen = 'home';
   String themeMode = 'dark'; // dark | light
   String unit = 'C'; // C | F
   String appIcon = 'default'; // default | light | accent | mono
+  String? profileDraftName; // rascunho do nome em Editar perfil (a barra salva)
+  String familyCodeSaved = ''; // código de convite da família
+
+  /* código de convite (gerado uma vez e lembrado) */
+  String get familyCode {
+    if (familyCodeSaved.isEmpty) {
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      final r = DateTime.now().millisecondsSinceEpoch;
+      familyCodeSaved = List.generate(6, (i) => chars[(r >> (i * 5)) % chars.length]).join();
+      _save();
+    }
+    return familyCodeSaved;
+  }
+
+  /* entra em uma família pelo código do convite (busca e sincroniza o registro) */
+  Future<bool> joinFamily(String code) async {
+    final c = code.trim().toUpperCase();
+    if (c.length != 6) return false;
+    familyCodeSaved = c;
+    famOn = true;
+    final remote = await FamilySync.fetch(c);
+    if (remote != null) {
+      if (remote['users'] is List && (remote['users'] as List).isNotEmpty) {
+        users = (remote['users'] as List).map((x) => FamilyUser.fromJson(x)).toList();
+      }
+      if (remote['locations'] is List && (remote['locations'] as List).isNotEmpty) {
+        locations = (remote['locations'] as List).map((x) => Place.fromJson(x)).toList();
+        if (locations.isNotEmpty && !locations.any((l) => l.id == activeLoc)) activeLoc = locations.first.id;
+      }
+      if (remote['devices'] is List && (remote['devices'] as List).isNotEmpty) {
+        devices = (remote['devices'] as List).map((x) => Device.fromJson(x)).toList();
+      }
+    }
+    _changed();
+    syncFamily();
+    return true;
+  }
+
+  /* envia o registro da família para o Worker */
+  void syncFamily() {
+    if (familyCodeSaved.isEmpty || !famOn) return;
+    FamilySync.push(familyCodeSaved, {
+      'code': familyCodeSaved,
+      'updated': DateTime.now().millisecondsSinceEpoch,
+      'users': users.map((u) => u.toJson()).toList(),
+      'locations': locations.map((l) => l.toJson()).toList(),
+      'devices': devices.map((d) => d.toJson()).toList(),
+    });
+  }
   int activeLoc = 1;
   String room = 'Todos';
   String? selected;
   bool locMenu = false;
 
-  List<Place> locations = [
-    Place(id: 1, name: 'Casa', rooms: ['Sala', 'Quarto', 'Escritório']),
-    Place(id: 2, name: 'Trabalho', rooms: ['Reunião', 'Suíte']),
-  ];
-
-  List<Device> devices = [
-    Device(id: 'sala', name: 'Ar da Sala', room: 'Sala', temp: 22, mode: 'cool', fan: 2),
-    Device(id: 'quarto', name: 'Ar do Quarto', room: 'Quarto', temp: 24, mode: 'heat', fan: 1),
-    Device(id: 'escritorio', name: 'Ar do Escritório', room: 'Escritório', temp: 20, mode: 'cool', fan: 3, on: true),
-    Device(id: 'reuniao', name: 'Ar da Reunião', room: 'Reunião', temp: 23, mode: 'auto', fan: 2),
-  ];
-
-  List<Schedule> schedules = [
-    Schedule(id: 1, name: 'Acordar', cmd: 'on', mode: 'cool', hour: 6, minute: 30, temp: 22, days: [1, 2, 3, 4, 5]),
-    Schedule(id: 2, name: 'Sair', cmd: 'off', hour: 8, minute: 30, days: [1, 2, 3, 4, 5]),
-    Schedule(id: 3, name: 'Chegar', cmd: 'on', mode: 'auto', hour: 18, minute: 0, temp: 23, days: [1, 2, 3, 4, 5]),
-    Schedule(id: 4, name: 'Dormir', cmd: 'on', mode: 'heat', hour: 22, minute: 45, temp: 25, days: [0, 1, 2, 3, 4, 5, 6]),
-  ];
-
+  List<Place> locations = [];
+  List<Device> devices = [];
+  List<Schedule> schedules = [];
   bool famOn = true;
-  List<FamilyUser> users = [
-    FamilyUser(id: 1, name: 'Matheus', avatar: 'p1', role: 'admin', rooms: ['Sala', 'Quarto', 'Escritório']),
-    FamilyUser(id: 2, name: 'Filha', avatar: 'p3', rooms: ['Quarto']),
-  ];
+  List<FamilyUser> users = [];
 
   // notificações / energia
   bool notifPush = true, notifEnergy = true, notifAlerts = false;
   double tariff = 0.92;
+
+  // localização / clima (detectados ou escolhidos pelo usuário)
+  String city = '', uf = '';
+  double? lat, lon;
+  String distributor = '';
+  double baseTariff = 0; // R$/kWh (TE+TUSD) da ANEEL
+  String flagName = '';
+  double flagSurcharge = 0; // R$/kWh
+  double? weatherTemp, weatherFeels, weatherHumidity;
+  int? weatherCode;
+  int weatherAt = 0;
 
   /* ---------- persistência (volta à tela certa ao reabrir) ---------- */
   SharedPreferences? _prefs;
@@ -121,7 +195,12 @@ class AppState extends ChangeNotifier {
     try {
       _prefs = await SharedPreferences.getInstance();
       final raw = _prefs!.getString('gree_state');
-      if (raw != null) _fromJson(jsonDecode(raw) as Map<String, dynamic>);
+      if (raw != null) {
+        _fromJson(jsonDecode(raw) as Map<String, dynamic>);
+      } else {
+        // primeira instalação: segue o tema do sistema (a pessoa ajusta no onboarding)
+        themeMode = ui.PlatformDispatcher.instance.platformBrightness == ui.Brightness.dark ? 'dark' : 'light';
+      }
     } catch (_) {
       // estado corrompido? segue com os padrões
     }
@@ -139,6 +218,8 @@ class AppState extends ChangeNotifier {
   }
 
   Map<String, dynamic> _toJson() => {
+        'onboarded': onboarded,
+        'familyCode': familyCodeSaved,
         'screen': screen,
         'themeMode': themeMode,
         'unit': unit,
@@ -151,6 +232,19 @@ class AppState extends ChangeNotifier {
         'notifEnergy': notifEnergy,
         'notifAlerts': notifAlerts,
         'tariff': tariff,
+        'city': city,
+        'uf': uf,
+        'lat': lat,
+        'lon': lon,
+        'distributor': distributor,
+        'baseTariff': baseTariff,
+        'flagName': flagName,
+        'flagSurcharge': flagSurcharge,
+        'weatherTemp': weatherTemp,
+        'weatherFeels': weatherFeels,
+        'weatherHumidity': weatherHumidity,
+        'weatherCode': weatherCode,
+        'weatherAt': weatherAt,
         'locations': locations.map((l) => l.toJson()).toList(),
         'devices': devices.map((d) => d.toJson()).toList(),
         'schedules': schedules.map((s) => s.toJson()).toList(),
@@ -158,6 +252,11 @@ class AppState extends ChangeNotifier {
       };
 
   void _fromJson(Map<String, dynamic> j) {
+    // instalação limpa: dados de versões antigas (sem o campo de onboarding)
+    // são descartados — atualizações futuras sempre têm o campo e preservam tudo
+    if (!j.containsKey('onboarded')) return;
+    onboarded = j['onboarded'] ?? false;
+    familyCodeSaved = j['familyCode'] ?? '';
     screen = j['screen'] ?? 'home';
     themeMode = j['themeMode'] ?? 'dark';
     unit = j['unit'] ?? 'C';
@@ -170,6 +269,19 @@ class AppState extends ChangeNotifier {
     notifEnergy = j['notifEnergy'] ?? true;
     notifAlerts = j['notifAlerts'] ?? false;
     tariff = (j['tariff'] as num?)?.toDouble() ?? 0.92;
+    city = j['city'] ?? '';
+    uf = j['uf'] ?? '';
+    lat = (j['lat'] as num?)?.toDouble();
+    lon = (j['lon'] as num?)?.toDouble();
+    distributor = j['distributor'] ?? '';
+    baseTariff = (j['baseTariff'] as num?)?.toDouble() ?? 0;
+    flagName = j['flagName'] ?? '';
+    flagSurcharge = (j['flagSurcharge'] as num?)?.toDouble() ?? 0;
+    weatherTemp = (j['weatherTemp'] as num?)?.toDouble();
+    weatherFeels = (j['weatherFeels'] as num?)?.toDouble();
+    weatherHumidity = (j['weatherHumidity'] as num?)?.toDouble();
+    weatherCode = j['weatherCode'];
+    weatherAt = j['weatherAt'] ?? 0;
     if (j['locations'] != null) locations = (j['locations'] as List).map((x) => Place.fromJson(x)).toList();
     if (j['devices'] != null) devices = (j['devices'] as List).map((x) => Device.fromJson(x)).toList();
     if (j['schedules'] != null) schedules = (j['schedules'] as List).map((x) => Schedule.fromJson(x)).toList();
@@ -197,6 +309,13 @@ class AppState extends ChangeNotifier {
 
   void setTheme(String mode) {
     themeMode = mode;
+    _changed();
+  }
+
+  void applyProfileDraft() {
+    final n = profileDraftName?.trim();
+    if (n != null && n.isNotEmpty && users.isNotEmpty) users.first.name = n;
+    profileDraftName = null;
     _changed();
   }
 
@@ -278,12 +397,14 @@ class AppState extends ChangeNotifier {
     if (name.trim().isEmpty) return;
     locations.add(Place(id: DateTime.now().millisecondsSinceEpoch % 100000, name: name.trim(), rooms: []));
     _changed();
+    syncFamily();
   }
 
   void removePlace(int id) {
     locations.removeWhere((l) => l.id == id);
     if (locations.isNotEmpty && !locations.any((l) => l.id == activeLoc)) activeLoc = locations.first.id;
     _changed();
+    syncFamily();
   }
 
   void addRoom(int locId, String room) {
@@ -292,6 +413,7 @@ class AppState extends ChangeNotifier {
     if (i >= 0) {
       locations[i].rooms.add(room.trim());
       _changed();
+      syncFamily();
     }
   }
 
@@ -300,6 +422,7 @@ class AppState extends ChangeNotifier {
     if (i >= 0) {
       locations[i].rooms.remove(room);
       _changed();
+      syncFamily();
     }
   }
 
@@ -308,17 +431,20 @@ class AppState extends ChangeNotifier {
     final ids = users.map((u) => u.id).toList()..sort();
     users.add(FamilyUser(id: (ids.isEmpty ? 0 : ids.last) + 1, name: name.trim(), avatar: 'p2'));
     _changed();
+    syncFamily();
   }
 
   void removeUser(int id) {
     users.removeWhere((u) => u.id == id);
     _changed();
+    syncFamily();
   }
 
   void disableFamily() {
     famOn = false;
     if (users.isNotEmpty) users = [users.first];
     _changed();
+    syncFamily();
   }
 
   void setNotif(String key, bool v) {
@@ -330,6 +456,116 @@ class AppState extends ChangeNotifier {
 
   void setTariff(double v) {
     tariff = double.parse(v.clamp(0.1, 9).toStringAsFixed(2));
+    _changed();
+  }
+
+  /* ---------- localização, tarifa e clima (automático) ---------- */
+  /* rascunho do novo aparelho (a tela de cadastro preenche; a barra confirma) */
+  String newDevName = 'Ar-condicionado';
+  String newDevRoom = '';
+  String newDevWifi = '';
+  String newDevPass = '';
+  String newDevMode = 'cool';
+  int newDevTemp = 22;
+
+  void resetNewDeviceDraft() {
+    newDevName = '';
+    newDevRoom = '';
+    newDevWifi = '';
+    newDevPass = '';
+    newDevMode = 'cool';
+    newDevTemp = 22;
+    _changed();
+  }
+
+  void commitNewDevice() {
+    final name = newDevName.trim().isEmpty ? 'Ar-condicionado' : newDevName.trim();
+    final room = newDevRoom.trim().isEmpty ? 'Sala' : newDevRoom.trim();
+    if (!locRooms().contains(room) && locations.isNotEmpty) {
+      locations.firstWhere((l) => l.id == activeLoc, orElse: () => locations.first).rooms.add(room);
+    }
+    devices.add(Device(
+      id: 'dev-${DateTime.now().millisecondsSinceEpoch}',
+      name: name,
+      room: room,
+      wifi: newDevWifi.trim(),
+      mode: newDevMode,
+      temp: newDevTemp,
+    ));
+    _changed();
+    syncFamily();
+  }
+
+  void removeDevice(String id) {
+    devices.removeWhere((d) => d.id == id);
+    if (selected == id) selected = null;
+    _changed();
+    syncFamily();
+  }
+
+  /* conclui o onboarding: app limpo + usuário/ar/local criados */
+  void finishOnboarding({
+    required String name,
+    required String avatar,
+    required String devName,
+    required String room,
+    required int temp,
+    required String mode,
+    GeoPlace? place,
+  }) {
+    final r = room.trim().isEmpty ? 'Sala' : room.trim();
+    users = [FamilyUser(id: 1, name: name.trim().isEmpty ? 'Usuário' : name.trim(), avatar: avatar, role: 'admin', rooms: [r])];
+    locations = [Place(id: 1, name: 'Casa', rooms: [r])];
+    devices = [Device(id: 'dev-1', name: devName.trim().isEmpty ? 'Ar-condicionado' : devName.trim(), room: r, temp: temp, mode: mode)];
+    schedules = [];
+    activeLoc = 1;
+    selected = 'dev-1';
+    screen = 'home';
+    famOn = false;
+    onboarded = true;
+    _changed();
+    if (place != null) {
+      applyPlace(place);
+    }
+  }
+
+  Future<void> applyPlace(GeoPlace place) async {
+    city = place.city;
+    uf = place.uf;
+    lat = place.lat;
+    lon = place.lon;
+    _changed();
+    await resolveEnergy();
+    await refreshWeather();
+  }
+
+  Future<void> resolveEnergy() async {
+    final data = await Remote.energyData();
+    if (data == null) return;
+    flagName = data.flagName;
+    flagSurcharge = data.flagSurcharge;
+    // distribuidora: a salva, senão a primeira compatível com a UF
+    final options = ufDistributors[uf] ?? [];
+    if (distributor.isEmpty || !data.tariffs.containsKey(distributor)) {
+      distributor = options.firstWhere((o) => data.tariffs.containsKey(o), orElse: () => distributor);
+    }
+    final base = data.tariffs[distributor];
+    if (base != null) {
+      baseTariff = base;
+      tariff = double.parse((base + flagSurcharge).toStringAsFixed(3));
+    }
+    _changed();
+  }
+
+  Future<void> refreshWeather() async {
+    if (lat == null || lon == null) return;
+    final w = await Remote.weather(lat!, lon!);
+    if (w == null) return;
+    weatherTemp = w.temp;
+    weatherFeels = w.feels;
+    weatherHumidity = w.humidity;
+    weatherCode = w.code;
+    weatherAt = DateTime.now().millisecondsSinceEpoch;
     _changed();
   }
 }

@@ -10,6 +10,9 @@ import 'screens/schedule.dart';
 import 'screens/energy.dart';
 import 'screens/profile.dart';
 import 'screens/updates.dart';
+import 'screens/onboarding.dart';
+import 'screens/device_manage.dart';
+import 'screens/add_device.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -62,6 +65,8 @@ const INTERNAL = {
   'integrations': 'Integrações',
   'icons': 'Ícones',
   'updates': 'Atualizações',
+  'devmanage': 'Gerenciar ar',
+  'adddevice': 'Novo dispositivo',
 };
 
 class AppShell extends StatefulWidget {
@@ -91,6 +96,8 @@ class _AppShellState extends State<AppShell> {
     final isTab = TABS.any((t) => t.$1 == st.screen);
     final isInternal = INTERNAL.containsKey(st.screen);
 
+    if (!st.onboarded) return OnboardingScreen(st: st); // primeira abertura
+
     final Widget body = switch (st.screen) {
       'home' => HomeScreen(st: st),
       'schedule' => ScheduleScreen(st: st),
@@ -105,15 +112,38 @@ class _AppShellState extends State<AppShell> {
       'integrations' => IntegrationsScreen(st: st),
       'icons' => IconsScreen(st: st),
       'updates' => UpdatesScreen(st: st),
+      'devmanage' => DeviceManageScreen(st: st),
+      'adddevice' => AddDeviceScreen(st: st),
       _ => HomeScreen(st: st),
     };
 
-    return Scaffold(
+    return PopScope(
+      canPop: isTab,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        st.go(st.screen == 'control' ? 'home' : 'profile');
+      },
+      child: Scaffold(
       body: SafeArea(
         bottom: false,
         child: Column(children: [
           if (isInternal)
-            TopBar(title: INTERNAL[st.screen]!, onBack: () => st.go(st.screen == 'control' ? 'home' : 'profile'))
+            TopBar(
+                title: INTERNAL[st.screen]!,
+                center: true,
+                onBack: () => st.go(st.screen == 'devmanage'
+                    ? 'control'
+                    : st.screen == 'control' || st.screen == 'adddevice'
+                        ? 'home'
+                        : 'profile'))
+          else if (st.screen == 'schedule')
+            const TopBar(title: 'Agendamento', center: true)
+          else if (st.screen == 'energy')
+            const TopBar(title: 'Energia', center: true)
+          else if (st.screen == 'profile')
+            const TopBar(title: 'Perfil', center: true)
+          else if (st.screen == 'home')
+            const TopBar(title: 'Início', center: true)
           else
             const SizedBox(height: 6),
           Expanded(child: body),
@@ -158,14 +188,28 @@ class _AppShellState extends State<AppShell> {
           : SafeArea(
               top: false,
               child: ActionBar(
-                bare: st.screen == 'locations',
+                bare: true,
                 actions: switch (st.screen) {
                   'control' => [ActionButton('Voltar', () => st.go('home'), ghost: true)],
                   'locations' => [ActionButton('Voltar', () => st.go('profile'), ghost: true)],
+                  'adddevice' => [
+                    ActionButton('Cancelar', () => st.go('home'), ghost: true),
+                    ActionButton('Adicionar', () {
+                      st.commitNewDevice();
+                      st.go('home');
+                    }, ghost: true),
+                  ],
+                  'editprofile' => [
+                    ActionButton('Salvar', () {
+                      st.applyProfileDraft();
+                      st.go('profile');
+                    }, ghost: true)
+                  ],
                   _ => [ActionButton('Concluir', () => st.go('profile'), ghost: true)],
                 },
               ),
             ),
+    ),
     );
   }
 }

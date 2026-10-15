@@ -3,12 +3,14 @@ import 'package:flutter/material.dart';
 import '../theme.dart';
 import '../state.dart';
 import '../widgets.dart';
+import '../services/remote.dart';
 
 /* ---------- borda em onda (card ligado) ---------- */
 class WaveBorder extends StatefulWidget {
   final Widget child;
   final BorderRadius radius;
-  const WaveBorder({super.key, required this.child, required this.radius});
+  final Color color;
+  const WaveBorder({super.key, required this.child, required this.radius, this.color = const Color(0xFF4EA8FF)});
 
   @override
   State<WaveBorder> createState() => _WaveBorderState();
@@ -28,7 +30,7 @@ class _WaveBorderState extends State<WaveBorder> with SingleTickerProviderStateM
     return AnimatedBuilder(
       animation: _c,
       builder: (_, child) => CustomPaint(
-        painter: _WavePainter(angle: _c.value * 2 * pi, radius: widget.radius),
+        painter: _WavePainter(angle: _c.value * 2 * pi, radius: widget.radius, color: widget.color),
         child: child,
       ),
       child: widget.child,
@@ -39,7 +41,8 @@ class _WaveBorderState extends State<WaveBorder> with SingleTickerProviderStateM
 class _WavePainter extends CustomPainter {
   final double angle;
   final BorderRadius radius;
-  _WavePainter({required this.angle, required this.radius});
+  final Color color;
+  _WavePainter({required this.angle, required this.radius, required this.color});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -49,13 +52,13 @@ class _WavePainter extends CustomPainter {
       startAngle: 0,
       endAngle: 2 * pi,
       transform: GradientRotation(angle),
-      colors: const [
-        Color(0x004EA8FF),
-        Color(0xF24EA8FF),
-        Color(0x384EA8FF),
-        Color(0x004EA8FF),
-        Color(0x994EA8FF),
-        Color(0x004EA8FF),
+      colors: [
+        color.withValues(alpha: 0),
+        color.withValues(alpha: .95),
+        color.withValues(alpha: .22),
+        color.withValues(alpha: 0),
+        color.withValues(alpha: .6),
+        color.withValues(alpha: 0),
       ],
       stops: const [0, .16, .38, .58, .82, 1],
     ).createShader(Offset.zero & size);
@@ -97,20 +100,21 @@ class DeviceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette();
+    final c = modeAccent(d.mode);
     final card = Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: p.surface,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: d.on ? AppColors.accent.withValues(alpha: .62) : p.line),
-        boxShadow: d.on ? [BoxShadow(color: AppColors.accent.withValues(alpha: .12), blurRadius: 22)] : null,
+        border: Border.all(color: d.on ? c.withValues(alpha: .62) : p.line),
+        boxShadow: d.on ? [BoxShadow(color: c.withValues(alpha: .12), blurRadius: 22)] : null,
       ),
       child: Row(children: [
         Container(
           width: 46,
           height: 46,
           decoration: BoxDecoration(color: p.surface2, borderRadius: BorderRadius.circular(15)),
-          child: Icon(_modeIcon, size: 21, color: d.on ? AppColors.accent : p.dim),
+          child: Icon(_modeIcon, size: 21, color: d.on ? c : p.dim),
         ),
         const SizedBox(width: 14),
         Expanded(
@@ -130,9 +134,9 @@ class DeviceCard extends StatelessWidget {
             width: 46,
             height: 46,
             decoration: BoxDecoration(
-              color: d.on ? AppColors.accent : p.surface2,
+              color: d.on ? c : p.surface2,
               shape: BoxShape.circle,
-              border: Border.all(color: d.on ? AppColors.accent : p.line),
+              border: Border.all(color: d.on ? c : p.line),
             ),
             child: Icon(Icons.power_settings_new_rounded,
                 size: 20, color: d.on ? Colors.white : p.dim),
@@ -145,7 +149,7 @@ class DeviceCard extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.only(bottom: 12),
         child: d.on
-            ? WaveBorder(radius: BorderRadius.circular(22), child: card)
+            ? WaveBorder(radius: BorderRadius.circular(22), color: c, child: card)
             : card,
       ),
     );
@@ -182,8 +186,10 @@ class HomeScreen extends StatelessWidget {
                 const Icon(Icons.location_on_outlined, size: 15, color: AppColors.accent),
                 const SizedBox(width: 6),
                 Text(st.loc.name, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: p.text)),
-                const SizedBox(width: 4),
-                Icon(Icons.keyboard_arrow_down_rounded, size: 17, color: p.dim),
+                if (st.locations.length > 1) ...[
+                  const SizedBox(width: 4),
+                  Icon(Icons.keyboard_arrow_down_rounded, size: 17, color: p.dim),
+                ],
               ]),
             ),
           ),
@@ -193,24 +199,47 @@ class HomeScreen extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            gradient: LinearGradient(colors: [AppColors.accent.withValues(alpha: .18), p.surface]),
+            color: p.surface,
             borderRadius: BorderRadius.circular(22),
             border: Border.all(color: p.line),
           ),
-          child: Row(children: [
-            const Icon(Icons.wb_sunny_rounded, size: 34, color: AppColors.warn),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('27°C · Parcialmente nublado',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: p.text)),
-                const SizedBox(height: 3),
-                Text('Umidade 52% · Sensação 29°C', style: TextStyle(fontSize: 11.5, color: p.dim)),
-              ]),
-            ),
-          ]),
+          child: st.weatherTemp != null
+              ? Row(children: [
+                  Icon(st.weatherCode == 0 || st.weatherCode == 1 ? Icons.wb_sunny_rounded : Icons.cloud_rounded,
+                      size: 34, color: AppColors.warn),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text('${st.weatherTemp!.round()}°${st.unit} · ${WeatherNow.conditionOf(st.weatherCode ?? 2)}',
+                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: p.text)),
+                      const SizedBox(height: 3),
+                      Text('Umidade ${st.weatherHumidity!.round()}% · Sensação ${st.weatherFeels!.round()}°${st.unit}',
+                          style: TextStyle(fontSize: 11.5, color: p.dim)),
+                    ]),
+                  ),
+                  if (st.city.isNotEmpty)
+                    Text('${st.city}/${st.uf}', style: TextStyle(fontSize: 11, color: p.dimmer)),
+                ])
+              : GestureDetector(
+                  onTap: () => st.go('energyset'),
+                  child: Row(children: [
+                    const Icon(Icons.location_on_outlined, size: 24, color: AppColors.accent),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Text('Definir localização',
+                            style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: p.text)),
+                        const SizedBox(height: 2),
+                        Text('Clima e tarifa de energia automáticos',
+                            style: TextStyle(fontSize: 11, color: p.dim)),
+                      ]),
+                    ),
+                    Icon(Icons.chevron_right_rounded, size: 18, color: p.dimmer),
+                  ]),
+                ),
         ),
-        SectionTitle('${rooms.contains(st.room) ? st.room : "Todos"} · $onCount de ${inLoc.length} ligados'),
+        SectionTitleAction('${rooms.contains(st.room) ? st.room : "Todos"} · $onCount de ${inLoc.length} ligados',
+            label: 'Novo dispositivo', onTap: () => _addDevice(context)),
         Row(children: [
           for (final r in rooms)
             Padding(
@@ -236,21 +265,6 @@ class HomeScreen extends StatelessWidget {
             },
           ),
       ]),
-      Positioned(
-        right: 20,
-        bottom: 96,
-        child: GestureDetector(
-          onTap: () => _addDevice(context),
-          child: Container(
-            width: 54,
-            height: 54,
-            decoration: BoxDecoration(color: AppColors.accent, shape: BoxShape.circle, boxShadow: [
-              BoxShadow(color: AppColors.accent.withValues(alpha: .35), blurRadius: 18, offset: const Offset(0, 6)),
-            ]),
-            child: const Icon(Icons.add_rounded, size: 26, color: Colors.white),
-          ),
-        ),
-      ),
     ]);
   }
 
@@ -284,53 +298,7 @@ class HomeScreen extends StatelessWidget {
   }
 
   void _addDevice(BuildContext context) {
-    final p = context.palette();
-    final name = TextEditingController();
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: p.surface,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (_) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom + 24, left: 20, right: 20, top: 16),
-        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('Novo dispositivo', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: p.text)),
-          const SizedBox(height: 14),
-          TextField(
-            controller: name,
-            style: TextStyle(color: p.text),
-            decoration: InputDecoration(
-              hintText: 'Nome do aparelho (ex.: Ar da Cozinha)',
-              hintStyle: TextStyle(color: p.dimmer),
-              filled: true,
-              fillColor: p.surface2,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: p.line)),
-            ),
-          ),
-          const SizedBox(height: 14),
-          SizedBox(
-            width: double.infinity,
-            child: GestureDetector(
-              onTap: () {
-                if (name.text.trim().isEmpty) return;
-                st.devices.add(Device(
-                    id: 'dev-${DateTime.now().millisecondsSinceEpoch}',
-                    name: name.text.trim(),
-                    room: st.locRooms().isNotEmpty ? st.locRooms().first : 'Sala'));
-                st.go('home');
-                Navigator.pop(context);
-                showToast(context, 'Dispositivo adicionado');
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 15),
-                decoration: BoxDecoration(color: AppColors.accent, borderRadius: BorderRadius.circular(18)),
-                alignment: Alignment.center,
-                child: const Text('Adicionar dispositivo',
-                    style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: Colors.white)),
-              ),
-            ),
-          ),
-        ]),
-      ),
-    );
+    st.resetNewDeviceDraft();
+    st.go('adddevice');
   }
 }

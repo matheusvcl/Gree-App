@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import 'theme.dart';
 
 /* ---------- topbar ---------- */
@@ -80,6 +81,37 @@ class SectionTitle extends StatelessWidget {
   }
 }
 
+/* título de seção com ação à direita (ex.: o + de novos itens) */
+class SectionTitleAction extends StatelessWidget {
+  final String text;
+  final VoidCallback onTap;
+  final String label;
+  const SectionTitleAction(this.text, {super.key, required this.onTap, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette();
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(2, 22, 2, 10),
+      child: Row(children: [
+        Expanded(
+          child: Text(text.toUpperCase(),
+              style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: p.dim, letterSpacing: .7)),
+        ),
+        GestureDetector(
+          onTap: onTap,
+          child: Container(
+            width: 30,
+            height: 30,
+            decoration: BoxDecoration(color: p.surface2, borderRadius: BorderRadius.circular(10), border: Border.all(color: p.line)),
+            child: const Icon(Icons.add_rounded, size: 17, color: AppColors.accent),
+          ),
+        ),
+      ]),
+    );
+  }
+}
+
 class AppCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry padding;
@@ -108,10 +140,11 @@ class AppChip extends StatelessWidget {
   final String label;
   final bool on;
   final bool white;
+  final bool ghost;
   final Widget? icon;
   final VoidCallback? onTap;
   final bool small;
-  const AppChip({super.key, required this.label, this.on = false, this.white = false, this.icon, this.onTap, this.small = false});
+  const AppChip({super.key, required this.label, this.on = false, this.white = false, this.ghost = false, this.icon, this.onTap, this.small = false});
 
   @override
   Widget build(BuildContext context) {
@@ -121,6 +154,10 @@ class AppChip extends StatelessWidget {
       bg = AppColors.white;
       fg = const Color(0xFF101316);
       bd = AppColors.white;
+    } else if (ghost) {
+      bg = p.surface2;
+      fg = p.text;
+      bd = p.line;
     } else if (on) {
       bg = p.text;
       fg = p.bg;
@@ -226,6 +263,7 @@ class ActionBar extends StatelessWidget {
                             ? p.surface2
                             : AppColors.accent,
                     borderRadius: BorderRadius.circular(22),
+                    border: a.ghost ? Border.all(color: p.line) : null,
                   ),
                   alignment: Alignment.center,
                   child: Text(a.label,
@@ -268,7 +306,10 @@ Future<bool> showConfirm(BuildContext context,
                 onTap: () => Navigator.pop(ctx, false),
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 12),
-                  decoration: BoxDecoration(color: p.surface2, borderRadius: BorderRadius.circular(16)),
+                  decoration: BoxDecoration(
+                      color: p.surface2,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: p.line)),
                   alignment: Alignment.center,
                   child: Text('Cancelar', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: p.text)),
                 ),
@@ -316,7 +357,12 @@ void showToast(BuildContext context, String msg) {
               borderRadius: BorderRadius.circular(999),
               border: Border.all(color: p.line),
             ),
-            child: Text(msg, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: p.text)),
+            child: Text(msg,
+                style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: p.text,
+                    decoration: TextDecoration.none)), // bloqueia sublinhado herdado (linha amarela)
           ),
         ),
       ),
@@ -325,3 +371,51 @@ void showToast(BuildContext context, String msg) {
   Overlay.of(context).insert(entry);
   Future.delayed(const Duration(milliseconds: 1900), () => entry.remove());
 }
+
+            /* ---------- QR do convite: o ícone vira o QR ao tocar ---------- */
+            class InviteQr extends StatefulWidget {
+            final String code;
+            const InviteQr({super.key, required this.code});
+
+            @override
+            State<InviteQr> createState() => _InviteQrState();
+            }
+
+            class _InviteQrState extends State<InviteQr> {
+            bool open = false;
+
+            @override
+            Widget build(BuildContext context) {
+            final p = context.palette();
+            return GestureDetector(
+            onTap: () => setState(() => open = !open),
+            child: AnimatedContainer(
+            duration: const Duration(milliseconds: 220),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+            color: p.surface2,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: p.line),
+            ),
+            child: open
+              ? Column(children: [
+                  QrImageView(
+                    data: widget.code,
+                    size: 168,
+                    backgroundColor: Colors.white,
+                    padding: const EdgeInsets.all(10),
+                  ),
+                  const SizedBox(height: 8),
+                  Text('Mostre para a pessoa escanear com a câmera',
+                      textAlign: TextAlign.center, style: TextStyle(fontSize: 10.5, color: p.dim)),
+                ])
+              : Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                  const Icon(Icons.qr_code_2_rounded, size: 18, color: AppColors.accent),
+                  const SizedBox(width: 8),
+                  Text('Gerar QR code',
+                      style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: p.text)),
+                ]),
+            ),
+            );
+            }
+            }

@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import '../theme.dart';
 import '../state.dart';
 import '../widgets.dart';
+import '../widgets/swipe_card.dart';
 
 const DAY_SHORT = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
 const DAY_NAME = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 
 String hhmm(Schedule s) => '${s.hour.toString().padLeft(2, '0')}:${s.minute.toString().padLeft(2, '0')}';
 String daysLabel(List<int> days) {
+  if (days.isEmpty) return 'Uma vez';
   if (days.length == 7) return 'Todos os dias';
   if (days.toString() == [1, 2, 3, 4, 5].toString()) return 'Seg–Sex';
   if (days.toString() == [0, 6].toString()) return 'Fim de semana';
@@ -59,7 +61,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
 
     return Stack(children: [
       ListView(padding: const EdgeInsets.fromLTRB(20, 4, 20, 140), children: [
-        const SectionTitle('Rotinas'),
+        SectionTitleAction('Rotinas', label: 'Nova rotina', onTap: () => _edit(context, null)),
         for (final s in st.schedules) _schedRow(context, st, s),
         const SectionTitle('Em 24 horas'),
         AppCard(
@@ -94,21 +96,6 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
         ),
       ]),
       if (menuFor != null) _schedMenu(context, st),
-      Positioned(
-        right: 20,
-        bottom: 96,
-        child: GestureDetector(
-          onTap: () => _edit(context, null),
-          child: Container(
-            width: 54,
-            height: 54,
-            decoration: BoxDecoration(color: AppColors.accent, shape: BoxShape.circle, boxShadow: [
-              BoxShadow(color: AppColors.accent.withValues(alpha: .35), blurRadius: 18, offset: const Offset(0, 6)),
-            ]),
-            child: const Icon(Icons.add_rounded, size: 26, color: Colors.white),
-          ),
-        ),
-      ),
     ]);
   }
 
@@ -116,33 +103,27 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   Widget _schedRow(BuildContext context, AppState st, Schedule s) {
     final p = context.palette();
     final selected = sel.contains(s.id);
-    return GestureDetector(
-      onTap: () {
-        if (menuFor != null) {
-          setState(() => selected ? sel.remove(s.id) : sel.add(s.id));
-          if (sel.isEmpty) menuFor = null;
-        } else {
-          _edit(context, s);
-        }
-      },
-      onLongPressStart: (_) {
-        setState(() {
-          menuFor = s.id;
-          sel
-            ..clear()
-            ..add(s.id);
-        });
-      },
-      child: Dismissible(
-        key: ValueKey('sched-${s.id}'),
-        dismissThresholds: const {DismissDirection.startToEnd: .35, DismissDirection.endToStart: .35},
-        background: _swipeBg(context, icon: Icons.edit_rounded, color: AppColors.accent, align: Alignment.centerLeft),
-        secondaryBackground: _swipeBg(context, icon: Icons.delete_rounded, color: AppColors.danger, align: Alignment.centerRight),
-        confirmDismiss: (dir) async {
-          if (dir == DismissDirection.startToEnd) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: SwipeCard(
+        onTap: () {
+          if (menuFor != null) {
+            setState(() => selected ? sel.remove(s.id) : sel.add(s.id));
+            if (sel.isEmpty) menuFor = null;
+          } else {
             _edit(context, s);
-            return false;
           }
+        },
+        onLongPress: () {
+          setState(() {
+            menuFor = s.id;
+            sel
+              ..clear()
+              ..add(s.id);
+          });
+        },
+        onEdit: () => _edit(context, s),
+        onDelete: () async {
           final ok = await showConfirm(context,
               title: 'Excluir agendamento?',
               text: 'A rotina "${s.name}" será removida permanentemente.',
@@ -151,10 +132,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
             st.deleteSchedules([s.id]);
             showToast(context, 'Agendamento excluído');
           }
-          return false;
         },
         child: Container(
-          margin: const EdgeInsets.only(bottom: 12),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: selected ? AppColors.accentSoft : p.surface,
@@ -190,22 +169,6 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
             ),
           ]),
         ),
-      ),
-    );
-  }
-
-  Widget _swipeBg(BuildContext context, {required IconData icon, required Color color, required Alignment align}) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(20)),
-      alignment: align,
-      padding: const EdgeInsets.symmetric(horizontal: 28),
-      child: TweenAnimationBuilder<double>(
-        tween: Tween(begin: .4, end: 1),
-        duration: const Duration(milliseconds: 320),
-        curve: Curves.easeOutBack,
-        builder: (_, v, child) => Transform.scale(scale: v, child: child),
-        child: Icon(icon, color: Colors.white, size: 21),
       ),
     );
   }
@@ -322,8 +285,9 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
               const SizedBox(height: 16),
               SizedBox(
                 height: 130,
-                child: Row(children: [
-                  Expanded(
+                child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                  SizedBox(
+                    width: 74,
                     child: ListWheelScrollView.useDelegate(
                       controller: hCtrl,
                       itemExtent: 44,
@@ -336,7 +300,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                     ),
                   ),
                   Text(':', style: TextStyle(fontSize: 26, color: p.dim)),
-                  Expanded(
+                  SizedBox(
+                    width: 74,
                     child: ListWheelScrollView.useDelegate(
                       controller: mCtrl,
                       itemExtent: 44,
@@ -351,7 +316,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                 ]),
               ),
               const SizedBox(height: 10),
-              Row(children: [
+              Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                 for (var i = 0; i < 7; i++)
                   Padding(
                     padding: const EdgeInsets.only(right: 7),

@@ -11,6 +11,13 @@ const MODES = {
   'dry': ('Desumidificar', Icons.water_drop_rounded),
   'fan': ('Ventilar', Icons.air_rounded),
 };
+const MODES_SHORT = {
+  'auto': 'Auto',
+  'cool': 'Frio',
+  'heat': 'Calor',
+  'dry': 'Seco',
+  'fan': 'Vento',
+};
 const FANS = ['Silencioso', 'Baixa', 'Média', 'Alta', 'Turbo'];
 const SWINGS = ['Fixo', 'Vertical', 'Horizontal', 'Ambos'];
 
@@ -23,12 +30,15 @@ class ControlScreen extends StatelessWidget {
     final p = context.palette();
     final d = st.dev;
     final (modeLabel, modeIcon) = MODES[d.mode] ?? MODES['cool']!;
+    final c = modeAccent(d.mode);
+    final cs = modeSoft(d.mode);
 
     return ListView(padding: const EdgeInsets.fromLTRB(20, 4, 20, 140), children: [
+      const SizedBox(height: 26),
       Center(
-        child: Text(d.name, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: p.text)),
+        child: Text(d.name, textAlign: TextAlign.center, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: p.text)),
       ),
-      const SizedBox(height: 8),
+      const SizedBox(height: 18),
       SizedBox(
         height: 250,
         child: TempDial(
@@ -36,6 +46,7 @@ class ControlScreen extends StatelessWidget {
           min: st.tempMin,
           max: st.tempMax,
           unit: st.unit,
+          color: c,
           sub: '$modeLabel · ${FANS[d.fan]}',
           ambient: 'Ambiente 27°${st.unit} · Umidade 52%',
           onChanged: (t) {
@@ -56,21 +67,22 @@ class ControlScreen extends StatelessWidget {
                   st.go('control');
                 },
                 child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 13),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
                   decoration: BoxDecoration(
-                    color: d.mode == e.key ? AppColors.accentSoft : p.surface,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: d.mode == e.key ? AppColors.accent : p.line),
+                    color: d.mode == e.key ? cs : p.surface,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: d.mode == e.key ? c : p.line),
                   ),
-                  child: Column(children: [
-                    Icon(e.value.$2, size: 19, color: d.mode == e.key ? AppColors.accent : p.dim),
-                    const SizedBox(height: 5),
-                    Text(e.value.$1,
-                        textAlign: TextAlign.center,
+                  child: Column(mainAxisSize: MainAxisSize.min, children: [
+                    Icon(e.value.$2, size: 17, color: d.mode == e.key ? c : p.dim),
+                    const SizedBox(height: 4),
+                    Text(MODES_SHORT[e.key] ?? e.value.$1,
+                        maxLines: 1,
+                        softWrap: false,
                         style: TextStyle(
                             fontSize: 9.5,
                             fontWeight: FontWeight.w600,
-                            color: d.mode == e.key ? AppColors.accent : p.dim)),
+                            color: d.mode == e.key ? c : p.dim)),
                   ]),
                 ),
               ),
@@ -118,6 +130,34 @@ class ControlScreen extends StatelessWidget {
             }),
           ),
       ]),
+      const SectionTitle('Gerenciar'),
+      AppCard(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        child: InkWell(
+          onTap: () => st.go('devmanage'),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Row(children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(color: p.surface2, borderRadius: BorderRadius.circular(12)),
+                child: Icon(Icons.settings_rounded, size: 18, color: p.text),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text('Gerenciar este ar',
+                      style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: p.text)),
+                  Text('Configurar, trocar rede e redefinir de fábrica',
+                      style: TextStyle(fontSize: 11, color: p.dim)),
+                ]),
+              ),
+              Icon(Icons.chevron_right_rounded, size: 18, color: p.dimmer),
+            ]),
+          ),
+        ),
+      ),
       const SizedBox(height: 18),
       Center(
         child: Text(d.on ? 'Ligado · ajuste em tempo real' : 'Desligado · toque em ligar na tela inicial',
