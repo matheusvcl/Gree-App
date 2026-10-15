@@ -541,7 +541,10 @@ class AppState extends ChangeNotifier {
 
   Future<void> resolveEnergy() async {
     final data = await Remote.energyData();
-    if (data == null) return;
+    if (data == null) {
+      _changed(); // mesmo sem dados, a escolha do usuário vale e a tela atualiza
+      return;
+    }
     flagName = data.flagName;
     flagSurcharge = data.flagSurcharge;
     // distribuidora: a salva, senão a primeira compatível com a UF
@@ -555,6 +558,13 @@ class AppState extends ChangeNotifier {
       tariff = double.parse((base + flagSurcharge).toStringAsFixed(3));
     }
     _changed();
+  }
+
+  /* escolha manual da distribuidora (o nome aparece na hora) */
+  void setDistributor(String d) {
+    distributor = d;
+    _changed();
+    resolveEnergy();
   }
 
   Future<void> refreshWeather() async {

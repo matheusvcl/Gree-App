@@ -813,13 +813,10 @@ class _EnergySetScreenState extends State<EnergySetScreen> {
           const SizedBox(height: 8),
           for (final d in ufDistributors[st.uf] ?? [])
             ListTile(
-              onTap: () async {
-                st.distributor = d;
-                await st.resolveEnergy();
-                if (context.mounted) {
-                  Navigator.pop(context);
-                  showToast(context, 'Distribuidora: $d');
-                }
+              onTap: () {
+                st.setDistributor(d);
+                Navigator.pop(context);
+                showToast(context, 'Distribuidora: $d');
               },
               leading: Icon(
                   st.distributor == d ? Icons.check_circle_rounded : Icons.circle_outlined,
