@@ -212,7 +212,7 @@ class HomeScreen extends StatelessWidget {
           ),
           child: st.weatherTemp != null
               ? Row(children: [
-                  Icon(st.weatherCode == 0 || st.weatherCode == 1 ? Icons.wb_sunny_rounded : Icons.cloud_rounded,
+                  Icon(WeatherNow.iconOf(st.weatherCode ?? 2, st.weatherIsDay, wind: st.weatherWind),
                       size: 34, color: AppColors.warn),
                   const SizedBox(width: 14),
                   Expanded(

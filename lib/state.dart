@@ -194,6 +194,8 @@ class AppState extends ChangeNotifier {
   double flagSurcharge = 0; // R$/kWh
   double? weatherTemp, weatherFeels, weatherHumidity;
   int? weatherCode;
+  bool weatherIsDay = true;
+  double weatherWind = 0;
   int weatherAt = 0;
 
   /* ---------- persistência (volta à tela certa ao reabrir) ---------- */
@@ -594,6 +596,8 @@ class AppState extends ChangeNotifier {
     weatherFeels = w.feels;
     weatherHumidity = w.humidity;
     weatherCode = w.code;
+    weatherIsDay = w.isDay;
+    weatherWind = w.wind;
     weatherAt = DateTime.now().millisecondsSinceEpoch;
     _changed();
   }

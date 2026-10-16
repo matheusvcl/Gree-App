@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:geolocator/geolocator.dart';
 
@@ -23,10 +24,33 @@ class GeoPlace {
 }
 
 class WeatherNow {
-  final double temp, feels, humidity;
+  final double temp, feels, humidity, wind;
   final int code;
-  WeatherNow({required this.temp, required this.feels, required this.humidity, required this.code});
+  final bool isDay;
+  WeatherNow({required this.temp, required this.feels, required this.humidity, required this.code, this.isDay = true, this.wind = 0});
   static String conditionOf(int code) => WeatherNow(temp: 0, feels: 0, humidity: 0, code: code).condition;
+
+  /* ícone por condição e hora do dia — sol/lua com as variações do clima */
+  static IconData iconOf(int code, bool isDay, {double wind = 0}) {
+    if (wind >= 45) return Icons.air_rounded; // vento forte
+    return switch (code) {
+      0 || 1 => isDay ? Icons.wb_sunny_rounded : Icons.dark_mode_rounded,
+      2 => isDay ? Icons.wb_cloudy_rounded : Icons.bedtime_rounded,
+      3 => Icons.cloud_rounded,
+      45 || 48 => Icons.blur_on_rounded, // névoa
+      51 || 53 || 55 => Icons.grain_rounded, // garoa
+      56 || 57 => Icons.severe_cold_rounded, // garoa congelante (gelo)
+      61 || 63 || 65 || 80 || 81 || 82 => Icons.water_drop_rounded, // chuva
+      66 || 67 => Icons.severe_cold_rounded, // chuva congelante (gelo)
+      71 || 73 || 75 || 77 || 85 || 86 => Icons.snowing, // neve
+      95 => Icons.thunderstorm_rounded, // temporal
+      96 || 99 => Icons.flash_on_rounded, // tempestade com granizo
+      _ => isDay ? Icons.wb_cloudy_rounded : Icons.dark_mode_rounded,
+    };
+  }
+
+  IconData get icon => iconOf(code, isDay, wind: wind);
+
   String get condition => switch (code) {
         0 => 'Limpo',
         1 => 'Predominantemente limpo',
@@ -128,7 +152,7 @@ class Remote {
     try {
       final r = await http
           .get(Uri.parse('https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$lon'
-              '&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code'))
+              '&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,is_day,wind_speed_10m'))
           .timeout(const Duration(seconds: 10));
       if (r.statusCode != 200) return null;
       final c = ((jsonDecode(utf8.decode(r.bodyBytes)) as Map)['current'] ?? {}) as Map;
@@ -137,6 +161,8 @@ class Remote {
         feels: (c['apparent_temperature'] as num?)?.toDouble() ?? 0,
         humidity: (c['relative_humidity_2m'] as num?)?.toDouble() ?? 0,
         code: (c['weather_code'] as num?)?.toInt() ?? 2,
+        isDay: (c['is_day'] as num?)?.toInt() == 1,
+        wind: (c['wind_speed_10m'] as num?)?.toDouble() ?? 0,
       );
     } catch (_) {
       return null;
