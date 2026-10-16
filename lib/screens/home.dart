@@ -121,7 +121,7 @@ class DeviceCard extends StatelessWidget {
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(d.name, style: TextStyle(fontSize: 15.5, fontWeight: FontWeight.w600, color: p.text)),
             const SizedBox(height: 3),
-            Text('${d.room} · ${d.on ? "${d.temp}°${st.unit}" : "Desligado"}',
+            Text('${d.room} · ${d.on ? "${st.tempDisp(d.temp)}°${st.unit}" : "Desligado"}',
                 style: TextStyle(fontSize: 12.5, color: p.dim)),
             const SizedBox(height: 2),
             Text('$_modeLabel · ${['Silencioso', 'Baixa', 'Média', 'Alta', 'Turbo'][d.fan]}',
@@ -217,10 +217,10 @@ class HomeScreen extends StatelessWidget {
                   const SizedBox(width: 14),
                   Expanded(
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text('${st.weatherTemp!.round()}°${st.unit} · ${WeatherNow.conditionOf(st.weatherCode ?? 2)}',
+                      Text('${st.tempDisp(st.weatherTemp!)}°${st.unit} · ${st.tempAlt(st.weatherTemp!)} · ${WeatherNow.conditionOf(st.weatherCode ?? 2)}',
                           style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: p.text)),
                       const SizedBox(height: 3),
-                      Text('Umidade ${st.weatherHumidity!.round()}% · Sensação ${st.weatherFeels!.round()}°${st.unit}',
+                      Text('Umidade ${st.weatherHumidity!.round()}% · Sensação ${st.tempDisp(st.weatherFeels!)}°${st.unit}',
                           style: TextStyle(fontSize: 11.5, color: p.dim)),
                     ]),
                   ),

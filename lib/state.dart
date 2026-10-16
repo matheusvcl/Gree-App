@@ -215,6 +215,15 @@ class AppState extends ChangeNotifier {
     } catch (_) {
       // estado corrompido? segue com os padrões
     }
+    // dados antigos gravavam em °F quando a unidade era F — agora tudo vive em °C
+    if (unit == 'F') {
+      for (final d in devices) {
+        if (d.temp > 40) d.temp = ((d.temp - 32) * 5 / 9).round().clamp(16, 30);
+      }
+      for (final s in schedules) {
+        if (s.temp > 40) s.temp = ((s.temp - 32) * 5 / 9).round();
+      }
+    }
     // clima em tempo real: atualiza sozinho de 10 em 10 minutos
     refreshWeather();
     _weatherTimer?.cancel();
@@ -351,33 +360,32 @@ class AppState extends ChangeNotifier {
 
   void toggleTheme() => setTheme(themeMode == 'dark' ? 'light' : 'dark');
 
-  void toggleUnit() {
-    final toF = unit == 'C';
-    if (toF) {
-      for (final d in devices) {
-        d.temp = (d.temp * 9 / 5 + 32).round();
-      }
-      for (final s in schedules) {
-        if (s.temp > 0) s.temp = (s.temp * 9 / 5 + 32).round();
-      }
-      unit = 'F';
-    } else {
-      for (final d in devices) {
-        d.temp = ((d.temp - 32) * 5 / 9).round();
-      }
-      for (final s in schedules) {
-        if (s.temp > 0) s.temp = ((s.temp - 32) * 5 / 9).round();
-      }
-      unit = 'C';
-    }
+  void setUnit(String u) {
+    if (u == unit) return;
+    unit = u;
     _changed();
   }
+
+  void toggleUnit() => setUnit(unit == 'C' ? 'F' : 'C');
+
+  /* ---------- unidades de temperatura ----------
+   * os valores ficam SEMPRE em °C (o ar só entende °C no protocolo);
+   * a conversão acontece só na exibição e na entrada da pessoa.
+   */
+  double tempToDisplay(num c) => unit == 'F' ? c * 9 / 5 + 32 : c.toDouble();
+  int tempDisp(num c) => tempToDisplay(c).round();
+
+  /* a outra unidade, para não se perder (ex.: viajando) */
+  String tempAlt(num c) => unit == 'F' ? '${c.round()}°C' : '${(c * 9 / 5 + 32).round()}°F';
+
+  double tempFromDisplay(num v) => unit == 'F' ? (v - 32) * 5 / 9 : v.toDouble();
 
   int get tempMin => unit == 'C' ? 16 : 61;
   int get tempMax => unit == 'C' ? 30 : 86;
 
   void setTemp(int v) {
-    dev.temp = v.clamp(tempMin, tempMax);
+    // v vem na unidade de exibição; guarda em °C (16–30 é o que o ar aceita)
+    dev.temp = tempFromDisplay(v).round().clamp(16, 30);
     _changed();
   }
 

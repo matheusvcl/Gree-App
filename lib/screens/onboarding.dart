@@ -277,7 +277,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             _roundBtn(p, Icons.remove_rounded, () => setState(() => temp = (temp - 1).clamp(16, 30))),
             SizedBox(
               width: 90,
-              child: Text('$temp°${st.unit}',
+              child: Text('${st.tempDisp(temp)}°${st.unit}',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 26, fontWeight: FontWeight.w700, color: p.text)),
             ),

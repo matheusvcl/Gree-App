@@ -42,17 +42,14 @@ class ControlScreen extends StatelessWidget {
       SizedBox(
         height: 250,
         child: TempDial(
-          temp: d.temp,
+          temp: st.tempDisp(d.temp),
           min: st.tempMin,
           max: st.tempMax,
           unit: st.unit,
           color: c,
           sub: '$modeLabel · ${FANS[d.fan]}',
           ambient: 'Ambiente 27°${st.unit} · Umidade 52%',
-          onChanged: (t) {
-            d.temp = t;
-            st.touch();
-          },
+          onChanged: (t) => st.setTemp(t),
         ),
       ),
       const SectionTitle('Modo'),
