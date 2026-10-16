@@ -35,6 +35,16 @@ jobs:
           channel: stable
           cache: true
 
+      # libera espaço: o runner vem lotado de toolchains que não usamos
+      # (dotnet, ghc, swift, CodeQL...) e os caches + build precisam de folga
+      - name: Liberar espaço em disco
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup /usr/share/swift \
+            /opt/hostedtoolcache/CodeQL /usr/local/share/boost /usr/share/miniconda \
+            /usr/local/share/powershell \
+            /usr/local/lib/android/sdk/system-images /usr/local/lib/android/sdk/ndk || true
+          df -h /
+
       # cache de build: restaura o anterior, e cada run salva um novo
       # (o passo final apaga os antigos, mantendo só o mais recente)
       - uses: actions/cache@v5
