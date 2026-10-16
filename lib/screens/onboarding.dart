@@ -225,34 +225,29 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ),
           const SizedBox(height: 18),
           _label('Rede Wi-Fi do ar', p),
-          TextField(
-            onChanged: (v) => devWifi = v,
-            textAlign: TextAlign.center,
-            style: TextStyle(color: p.text, fontSize: 15),
-            decoration: InputDecoration(
-              hintText: 'Nome da rede (SSID)',
-              hintStyle: TextStyle(color: p.dimmer, fontSize: 13),
-              filled: true,
-              fillColor: p.surface,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: p.line)),
-            ),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            onChanged: (v) => devPass = v,
-            obscureText: true,
-            textAlign: TextAlign.center,
-            style: TextStyle(color: p.text, fontSize: 15),
-            decoration: InputDecoration(
-              hintText: 'Senha da rede',
-              hintStyle: TextStyle(color: p.dimmer, fontSize: 13),
-              filled: true,
-              fillColor: p.surface,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: p.line)),
+          InkWell(
+            onTap: () => _openWifi(context),
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+              decoration: BoxDecoration(
+                color: p.surface,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: p.line),
+              ),
+              child: Row(children: [
+                Icon(Icons.wifi_rounded, size: 18, color: devWifi.isEmpty ? p.dimmer : AppColors.accent),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(devWifi.isEmpty ? 'Configurar rede' : '$devWifi${devPass.isEmpty ? '' : ' · senha salva'}',
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: p.text)),
+                ),
+                Icon(Icons.chevron_right_rounded, size: 18, color: p.dimmer),
+              ]),
             ),
           ),
           const SizedBox(height: 8),
-          Text('O ar precisa estar conectado nesta rede para o app controlar pela rede local.',
+          Text('O ar precisa estar nesta rede para o app controlar pela rede local.',
               textAlign: TextAlign.center, style: TextStyle(fontSize: 11, color: p.dim, height: 1.4)),
           const SizedBox(height: 18),
           _label('Modo inicial', p),
@@ -456,6 +451,102 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         height: 42,
         decoration: BoxDecoration(color: p.surface2, shape: BoxShape.circle, border: Border.all(color: p.line)),
         child: Icon(icon, size: 19, color: p.text),
+      ),
+    );
+  }
+
+  Future<void> _openWifi(BuildContext context) async {
+    final r = await Navigator.push<Map<String, String>>(
+      context,
+      MaterialPageRoute(builder: (_) => WifiSetupScreen(ssid: devWifi, pass: devPass)),
+    );
+    if (r != null) {
+      setState(() {
+        devWifi = r['ssid'] ?? '';
+        devPass = r['pass'] ?? '';
+      });
+    }
+  }
+}
+
+/* tela de rede do ar (faz parte do step "Configure seu ar", sem criar step novo) */
+class WifiSetupScreen extends StatefulWidget {
+  final String ssid, pass;
+  const WifiSetupScreen({super.key, this.ssid = '', this.pass = ''});
+
+  @override
+  State<WifiSetupScreen> createState() => _WifiSetupScreenState();
+}
+
+class _WifiSetupScreenState extends State<WifiSetupScreen> {
+  late final TextEditingController ssid;
+  late final TextEditingController pass;
+
+  @override
+  void initState() {
+    super.initState();
+    ssid = TextEditingController(text: widget.ssid);
+    pass = TextEditingController(text: widget.pass);
+  }
+
+  @override
+  void dispose() {
+    ssid.dispose();
+    pass.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette();
+    return Scaffold(
+      backgroundColor: p.bg,
+      body: SafeArea(
+        bottom: false,
+        child: Column(children: [
+          TopBar(title: 'Rede Wi-Fi do ar', center: true, onBack: () => Navigator.pop(context)),
+          Expanded(
+            child: ListView(padding: const EdgeInsets.fromLTRB(20, 8, 20, 60), children: [
+              Text(
+                'Informe a rede em que o ar vai ficar conectado. O app controla o aparelho pela rede local.',
+                style: TextStyle(color: p.dim, fontSize: 13, height: 1.5),
+              ),
+              const SizedBox(height: 18),
+              TextField(
+                controller: ssid,
+                style: TextStyle(color: p.text, fontSize: 15),
+                decoration: InputDecoration(
+                  hintText: 'Nome da rede (SSID)',
+                  hintStyle: TextStyle(color: p.dimmer, fontSize: 13),
+                  filled: true,
+                  fillColor: p.surface,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: p.line)),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: pass,
+                obscureText: true,
+                style: TextStyle(color: p.text, fontSize: 15),
+                decoration: InputDecoration(
+                  hintText: 'Senha da rede',
+                  hintStyle: TextStyle(color: p.dimmer, fontSize: 13),
+                  filled: true,
+                  fillColor: p.surface,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: p.line)),
+                ),
+              ),
+              const SizedBox(height: 18),
+              Center(
+                child: AppChip(
+                  label: 'Salvar rede',
+                  on: true,
+                  onTap: () => Navigator.pop(context, {'ssid': ssid.text.trim(), 'pass': pass.text}),
+                ),
+              ),
+            ]),
+          ),
+        ]),
       ),
     );
   }
