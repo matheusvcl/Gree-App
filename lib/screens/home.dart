@@ -174,7 +174,14 @@ class HomeScreen extends StatelessWidget {
         // seletor de local
         Center(
           child: GestureDetector(
-            onTap: () => _openLocMenu(context),
+            onTap: () {
+              // um local só: vai direto para Gerenciar locais; dois ou mais: abre o seletor
+              if (st.locations.length > 1) {
+                _openLocMenu(context);
+              } else {
+                st.go('locations');
+              }
+            },
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
               decoration: BoxDecoration(
@@ -288,6 +295,31 @@ class HomeScreen extends StatelessWidget {
               subtitle: Text('${l.rooms.length} ambientes · ${l.rooms.join(', ')}',
                   style: TextStyle(fontSize: 11.5, color: p.dim)),
             ),
+          const SizedBox(height: 6),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: InkWell(
+              onTap: () {
+                Navigator.pop(context);
+                st.go('locations');
+              },
+              borderRadius: BorderRadius.circular(14),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 13),
+                decoration: BoxDecoration(
+                  color: p.surface2,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: p.line),
+                ),
+                child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                  const Icon(Icons.settings_rounded, size: 17, color: AppColors.accent),
+                  const SizedBox(width: 8),
+                  Text('Gerenciar locais',
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: p.text)),
+                ]),
+              ),
+            ),
+          ),
           const SizedBox(height: 8),
         ]),
       ),
