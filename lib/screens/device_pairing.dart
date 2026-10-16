@@ -148,7 +148,14 @@ class _DevicePairingScreenState extends State<DevicePairingScreen> {
           ),
         const SizedBox(height: 18),
         if (!scanning)
-          AppChip(label: 'Procurar de novo', ghost: true, small: true, onTap: _scan),
+          Center(
+            child: AppChip(
+              label: 'Procurar de novo',
+              icon: Icon(Icons.refresh_rounded, size: 15, color: p.text),
+              ghost: true,
+              onTap: _scan,
+            ),
+          ),
             ]),
           ),
         ]),

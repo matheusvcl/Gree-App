@@ -270,10 +270,17 @@ class ActionBar extends StatelessWidget {
           color: a.danger
               ? AppColors.danger
               : a.ghost
-                  ? p.surface2
+                  ? p.surface.withValues(alpha: .96)
                   : AppColors.accent,
           borderRadius: BorderRadius.circular(22),
           border: a.ghost ? Border.all(color: p.line) : null,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: .35),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+            ),
+          ],
         ),
         alignment: Alignment.center,
         child: Text(a.label,

@@ -78,7 +78,7 @@ class _DeviceManageScreenState extends State<DeviceManageScreen> {
         child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
           child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('Trocar a rede Wi-Fi do ar', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: p.text)),
+            Center(child: Text('Trocar a rede Wi-Fi do ar', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: p.text))),
             const SizedBox(height: 12),
             Text(
               '1. Segure o botão Wi-Fi/Reset do ar por ~5 segundos até o LED piscar\n'
@@ -87,14 +87,16 @@ class _DeviceManageScreenState extends State<DeviceManageScreen> {
               style: TextStyle(fontSize: 13, color: p.dim, height: 1.6),
             ),
             const SizedBox(height: 16),
-            AppChip(
-              label: 'Re-vincular agora',
-              on: true,
-              small: true,
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(context, MaterialPageRoute(builder: (_) => DevicePairingScreen(st: st, device: st.dev)));
-              },
+            Center(
+              child: AppChip(
+                label: 'Re-vincular agora',
+                on: true,
+                small: true,
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => DevicePairingScreen(st: st, device: st.dev)));
+                },
+              ),
             ),
             const SizedBox(height: 8),
           ]),
