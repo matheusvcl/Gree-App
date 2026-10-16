@@ -23,6 +23,17 @@ jobs:
           channel: stable
           cache: true
 
+      # cache de build (mesmo do release.yml): restaura o anterior, cada run
+      # salva um novo e o passo final apaga os antigos, mantendo só o mais recente
+      - uses: actions/cache@v5
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ github.run_id }}
+          restore-keys: |
+            gradle-
+
       - name: Dependências
         run: flutter pub get
 
@@ -30,7 +41,7 @@ jobs:
         run: flutter analyze --no-fatal-infos
 
       - name: Testes (unitários + widget)
-        run: flutter test --coverage
+        run: flutter test tests --coverage
 
       - name: Cobertura
         run: |
@@ -71,3 +82,11 @@ jobs:
           name: coverage
           path: coverage/lcov.info
           retention-days: 7
+
+      - name: Limpar caches antigos
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh cache list --repo "$GITHUB_REPOSITORY" --key gradle- --json key --jq '.[].key' \
+            | grep -v "^gradle-${{ github.run_id }}$" \
+            | xargs -r -I{} gh cache delete {} --repo "$GITHUB_REPOSITORY" || true

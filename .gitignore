@@ -70,5 +70,5 @@ worker/.cloudflare-token
 # cache local do wrangler
 worker/.wrangler/
 coverage/
-test/failures/
-test/goldens/
+tests/failures/
+tests/goldens/
