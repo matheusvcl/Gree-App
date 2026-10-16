@@ -26,7 +26,7 @@ void main() {
   testWidgets('distribuidora: selecionar mostra o nome na hora', (tester) async {
     final st = await pumpApp(tester);
     st.city = 'Rio Branco';
-    st.uf = ufDistributors.entries.firstWhere((e) => e.value.isNotEmpty).key;
+    st.uf = ufDistributors.entries.firstWhere((e) => e.value.length >= 2).key;
     st.touch();
     await tester.pump(const Duration(milliseconds: 350));
 
@@ -92,6 +92,25 @@ void main() {
     await tester.tap(find.text('Frio'));
     await tester.pump(const Duration(milliseconds: 350));
     expect(st.dev.mode, 'cool');
+  });
+
+  testWidgets('com uma distribuidora só, o app puxa direto (sem seletor)', (tester) async {
+    final st = await pumpApp(tester);
+    st.city = 'Rio Branco';
+    st.uf = ufDistributors.entries.firstWhere((e) => e.value.length == 1).key;
+    st.touch();
+    await tester.pump(const Duration(milliseconds: 350));
+
+    st.go('energyset');
+    await tester.pump(const Duration(milliseconds: 350));
+    await tester.pump(const Duration(milliseconds: 350)); // post-frame do auto-puxar
+
+    final unica = ufDistributors[st.uf]!.first;
+    expect(st.distributor, unica, reason: 'a única distribuidora deve ser usada direto');
+    await tester.scrollUntilVisible(find.text('Distribuidora'), 250, scrollable: find.byType(Scrollable).first);
+    await tester.pump(const Duration(milliseconds: 350));
+    expect(find.text('Selecionar'), findsNothing);
+    expect(find.text(unica), findsWidgets); // nome já aparece
   });
 
   testWidgets('Sobre mostra nome, modelo e rede', (tester) async {

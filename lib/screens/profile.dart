@@ -590,6 +590,18 @@ class _EnergySetScreenState extends State<EnergySetScreen> {
   Timer? _debounce;
 
   @override
+  void initState() {
+    super.initState();
+    // uma distribuidora só na região: seleciona direto, sem perguntar
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final opts = ufDistributors[widget.st.uf] ?? [];
+      if (opts.length == 1 && widget.st.distributor != opts.first) {
+        widget.st.setDistributor(opts.first);
+      }
+    });
+  }
+
+  @override
   void dispose() {
     _debounce?.cancel();
     super.dispose();
@@ -724,7 +736,11 @@ class _EnergySetScreenState extends State<EnergySetScreen> {
       const SectionTitle('Energia'),
       AppCard(
         child: Column(children: [
-          if (ufDistributors[st.uf]?.isNotEmpty ?? false)
+          // uma distribuidora só na região: puxa direto, sem seletor
+          if ((ufDistributors[st.uf]?.length ?? 0) == 1)
+            _row('Distribuidora', st.distributor.isEmpty ? ufDistributors[st.uf]!.first : st.distributor),
+          // duas ou mais: a pessoa escolhe
+          if ((ufDistributors[st.uf]?.length ?? 0) >= 2)
             InkWell(
               onTap: () => _pickDistributor(context, st, p),
               child: Padding(
