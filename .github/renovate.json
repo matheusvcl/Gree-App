@@ -1,0 +1,32 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "baseBranches": ["main"],
+  "timezone": "America/Sao_Paulo",
+  "schedule": ["before 6am on monday"],
+  "labels": ["dependencies"],
+  "prConcurrentLimit": 10,
+  "prHourlyLimit": 5,
+  "commitMessageAction": "atualiza",
+  "packageRules": [
+    {
+      "description": "minor e patch passam direto quando os testes verdes",
+      "matchManagers": ["pub", "github-actions"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "automerge": true,
+      "platformAutomerge": true
+    },
+    {
+      "description": "major abre PR para revisão manual",
+      "matchUpdateTypes": ["major"],
+      "automerge": false
+    },
+    {
+      "description": "actions sempre nas majors novas (runtime Node 24)",
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["major"],
+      "automerge": true,
+      "platformAutomerge": true
+    }
+  ]
+}
