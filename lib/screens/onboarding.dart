@@ -23,6 +23,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   String avatar = 'p1';
   String devName = '';
   String room = '';
+  String devWifi = '';
+  String devPass = '';
   int temp = 22;
   String mode = 'cool';
   GeoPlace? place;
@@ -101,6 +103,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         room: room,
                         temp: temp,
                         mode: mode,
+                        devWifi: devWifi,
+                        devPass: devPass,
                         place: place,
                       );
                       st.famOn = famOn;
@@ -219,6 +223,37 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: p.line)),
             ),
           ),
+          const SizedBox(height: 18),
+          _label('Rede Wi-Fi do ar', p),
+          TextField(
+            onChanged: (v) => devWifi = v,
+            textAlign: TextAlign.center,
+            style: TextStyle(color: p.text, fontSize: 15),
+            decoration: InputDecoration(
+              hintText: 'Nome da rede (SSID)',
+              hintStyle: TextStyle(color: p.dimmer, fontSize: 13),
+              filled: true,
+              fillColor: p.surface,
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: p.line)),
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            onChanged: (v) => devPass = v,
+            obscureText: true,
+            textAlign: TextAlign.center,
+            style: TextStyle(color: p.text, fontSize: 15),
+            decoration: InputDecoration(
+              hintText: 'Senha da rede',
+              hintStyle: TextStyle(color: p.dimmer, fontSize: 13),
+              filled: true,
+              fillColor: p.surface,
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: p.line)),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text('O ar precisa estar conectado nesta rede para o app controlar pela rede local.',
+              textAlign: TextAlign.center, style: TextStyle(fontSize: 11, color: p.dim, height: 1.4)),
           const SizedBox(height: 18),
           _label('Modo inicial', p),
           Wrap(
