@@ -246,7 +246,7 @@ class HomeScreen extends StatelessWidget {
               padding: const EdgeInsets.only(right: 8),
               child: AppChip(label: r, on: st.room == r, small: true, onTap: () {
                 st.room = r;
-                st.go('home');
+                st.touch();
               }),
             ),
         ]),
@@ -261,7 +261,7 @@ class HomeScreen extends StatelessWidget {
             },
             onPower: () {
               d.on = !d.on;
-              st.go('home');
+              st.touch();
             },
           ),
       ]),
@@ -282,7 +282,7 @@ class HomeScreen extends StatelessWidget {
             ListTile(
               onTap: () {
                 st.selectLoc(l.id);
-                st.go('home');
+                st.touch();
                 Navigator.pop(context);
               },
               leading: Icon(st.activeLoc == l.id ? Icons.check_circle_rounded : Icons.circle_outlined,

@@ -51,7 +51,7 @@ class ControlScreen extends StatelessWidget {
           ambient: 'Ambiente 27°${st.unit} · Umidade 52%',
           onChanged: (t) {
             d.temp = t;
-            st.go('control');
+            st.touch();
           },
         ),
       ),
@@ -64,7 +64,7 @@ class ControlScreen extends StatelessWidget {
               child: GestureDetector(
                 onTap: () {
                   d.mode = e.key;
-                  st.go('control');
+                  st.touch();
                 },
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 10),
@@ -99,7 +99,7 @@ class ControlScreen extends StatelessWidget {
               child: GestureDetector(
                 onTap: () {
                   d.fan = i;
-                  st.go('control');
+                  st.touch();
                 },
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 11),
@@ -126,7 +126,7 @@ class ControlScreen extends StatelessWidget {
             padding: const EdgeInsets.only(right: 8),
             child: AppChip(label: s, on: d.swing == s, small: true, onTap: () {
               d.swing = s;
-              st.go('control');
+              st.touch();
             }),
           ),
       ]),

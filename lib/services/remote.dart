@@ -117,7 +117,7 @@ class Remote {
       if (perm == LocationPermission.denied) perm = await Geolocator.requestPermission();
       if (perm == LocationPermission.denied || perm == LocationPermission.deniedForever) return null;
       final pos = await Geolocator.getCurrentPosition(locationSettings: const LocationSettings(accuracy: LocationAccuracy.low));
-      return reverse(pos.latitude, pos.longitude);
+      return await reverse(pos.latitude, pos.longitude);
     } catch (_) {
       return null;
     }

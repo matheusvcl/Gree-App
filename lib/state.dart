@@ -307,6 +307,9 @@ class AppState extends ChangeNotifier {
     _changed();
   }
 
+  /* atualiza a tela atual sem navegar (para os controles refletirem na hora) */
+  void touch() => _changed();
+
   void setTheme(String mode) {
     themeMode = mode;
     _changed();

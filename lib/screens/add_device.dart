@@ -63,7 +63,7 @@ class _AddDeviceScreenState extends State<AddDeviceScreen> {
         }.entries)
           AppChip(label: e.value, on: st.newDevMode == e.key, small: true, onTap: () {
             st.newDevMode = e.key;
-            st.go('adddevice');
+            st.touch();
           }),
       ]),
       const SizedBox(height: 16),
@@ -72,7 +72,7 @@ class _AddDeviceScreenState extends State<AddDeviceScreen> {
       Row(children: [
         _roundBtn(p, Icons.remove_rounded, () {
           st.newDevTemp = (st.newDevTemp - 1).clamp(st.tempMin, st.tempMax);
-          st.go('adddevice');
+          st.touch();
         }),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 18),
@@ -81,7 +81,7 @@ class _AddDeviceScreenState extends State<AddDeviceScreen> {
         ),
         _roundBtn(p, Icons.add_rounded, () {
           st.newDevTemp = (st.newDevTemp + 1).clamp(st.tempMin, st.tempMax);
-          st.go('adddevice');
+          st.touch();
         }),
       ]),
     ]);

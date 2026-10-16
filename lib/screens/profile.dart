@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../theme.dart';
 import '../state.dart';
 import '../widgets.dart';
-import '../updater.dart';
 import '../avatars.dart';
 import '../services/remote.dart';
 
@@ -142,7 +141,7 @@ class EditProfileScreen extends StatelessWidget {
             GestureDetector(
               onTap: () {
                 me.avatar = id;
-                st.go('editprofile');
+                st.touch();
               },
               child: Container(
                 padding: const EdgeInsets.all(2),
@@ -204,7 +203,7 @@ class _LocationsScreenState extends State<LocationsScreen> {
           onTap: () {
             if (newName.text.trim().isEmpty) return;
             st.addPlace(newName.text.trim());
-            st.go('locations');
+            st.touch();
             showToast(context, 'Local adicionado');
           },
           child: Container(
@@ -239,7 +238,7 @@ class _LocationsScreenState extends State<LocationsScreen> {
           final id = ids.removeAt(oldIdx);
           ids.insert(newIdx, id);
           st.reorderLocations(ids);
-          st.go('locations');
+          st.touch();
           showToast(context, 'Ordem atualizada · ${st.locations.first.name} ativo');
         },
         itemBuilder: (_, i) {
@@ -278,7 +277,7 @@ class _LocationsScreenState extends State<LocationsScreen> {
                     child: GestureDetector(
                       onTap: () {
                         st.selectLoc(l.id);
-                        st.go('locations');
+                        st.touch();
                       },
                       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                         Text(l.name, style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w600, color: p.text)),
@@ -298,7 +297,7 @@ class _LocationsScreenState extends State<LocationsScreen> {
                             okLabel: 'Remover');
                         if (ok) {
                           st.removePlace(l.id);
-                          st.go('locations');
+                          st.touch();
                           showToast(context, 'Local removido');
                         }
                       },
@@ -319,7 +318,7 @@ class _LocationsScreenState extends State<LocationsScreen> {
                         icon: Icon(Icons.close_rounded, size: 12, color: p.dim),
                         onTap: () {
                           st.removeRoom(l.id, r);
-                          st.go('locations');
+                          st.touch();
                         },
                       ),
                   ]),
@@ -349,7 +348,7 @@ class _LocationsScreenState extends State<LocationsScreen> {
                     onTap: () {
                       st.addRoom(l.id, roomCtrl[l.id]?.text ?? '');
                       roomCtrl[l.id]?.clear();
-                      st.go('locations');
+                      st.touch();
                     },
                   ),
                 ]),
@@ -388,7 +387,7 @@ class FamilyScreen extends StatelessWidget {
             onChanged: (v) async {
               if (v) {
                 st.famOn = true;
-                st.go('family');
+                st.touch();
               } else {
                 final ok = await showConfirm(context,
                     title: 'Desativar o modo família?',
@@ -396,7 +395,7 @@ class FamilyScreen extends StatelessWidget {
                     okLabel: 'Desativar');
                 if (ok) {
                   st.disableFamily();
-                  st.go('family');
+                  st.touch();
                   showToast(context, 'Modo família desativado — usuário único');
                 }
               }
@@ -428,7 +427,7 @@ class FamilyScreen extends StatelessWidget {
         GestureDetector(
           onTap: () {
             st.addUser(newName.text);
-            st.go('family');
+            st.touch();
           },
           child: Container(
             width: 42,
@@ -461,7 +460,7 @@ class FamilyScreen extends StatelessWidget {
                         okLabel: 'Excluir');
                     if (ok) {
                       st.removeUser(u.id);
-                      st.go('family');
+                      st.touch();
                       showToast(context, 'Usuário excluído');
                     }
                   },
@@ -491,7 +490,7 @@ class FamilyScreen extends StatelessWidget {
                   small: true,
                   onTap: () {
                     u.prefs.mode = e.key;
-                    st.go('family');
+                    st.touch();
                   },
                 ),
             ]),
@@ -520,7 +519,7 @@ class FamilyScreen extends StatelessWidget {
             } else {
               showToast(context, 'Código inválido — são 6 caracteres');
             }
-            st.go('family');
+            st.touch();
           },
           style: TextStyle(color: p.text, fontSize: 13.5),
           decoration: InputDecoration(
@@ -562,15 +561,15 @@ class NotificationsScreen extends StatelessWidget {
     return ListView(padding: const EdgeInsets.fromLTRB(20, 4, 20, 140), children: [
       row('Notificações push', 'Alertas gerais do app', st.notifPush, (v) {
         st.notifPush = v;
-        st.go('notifications');
+        st.touch();
       }),
       row('Alertas de energia', 'Avisa quando o consumo passar do padrão', st.notifEnergy, (v) {
         st.notifEnergy = v;
-        st.go('notifications');
+        st.touch();
       }),
       row('Novidades', 'Novos recursos e melhorias', st.notifAlerts, (v) {
         st.notifAlerts = v;
-        st.go('notifications');
+        st.touch();
       }),
     ]);
   }

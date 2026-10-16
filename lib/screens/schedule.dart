@@ -164,7 +164,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
               value: s.on,
               onChanged: (v) {
                 s.on = v;
-                st.go('schedule');
+                st.touch();
               },
             ),
           ]),
@@ -261,6 +261,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     final p = context.palette();
     var hour = s?.hour ?? 6;
     var minute = s?.minute ?? 30;
+    final hCtrl = FixedExtentScrollController(initialItem: hour);
+    final mCtrl = FixedExtentScrollController(initialItem: minute);
     var days = {...(s?.days ?? [1, 2, 3, 4, 5])};
     var cmd = s?.cmd ?? 'on';
     var mode = s?.mode ?? 'cool';
@@ -273,8 +275,6 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (_) => StatefulBuilder(
         builder: (ctx, setLocal) {
-          final hCtrl = FixedExtentScrollController(initialItem: hour);
-          final mCtrl = FixedExtentScrollController(initialItem: minute);
           return Padding(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
             child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -414,7 +414,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                             ..days = sched.days;
                         });
                       }
-                      st.go('schedule');
+                      st.touch();
                       Navigator.pop(ctx);
                       showToast(context, 'Agendamento salvo');
                     },
