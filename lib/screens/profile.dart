@@ -803,28 +803,34 @@ class _EnergySetScreenState extends State<EnergySetScreen> {
   void _pickDistributor(BuildContext context, AppState st, AppPalette p) {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: p.surface,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (_) => SafeArea(
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          const SizedBox(height: 10),
-          Container(width: 42, height: 4, decoration: BoxDecoration(color: p.line, borderRadius: BorderRadius.circular(2))),
-          const SizedBox(height: 8),
-          for (final d in ufDistributors[st.uf] ?? [])
-            ListTile(
-              onTap: () {
-                st.setDistributor(d);
-                Navigator.pop(context);
-                showToast(context, 'Distribuidora: $d');
-              },
-              leading: Icon(
-                  st.distributor == d ? Icons.check_circle_rounded : Icons.circle_outlined,
-                  color: st.distributor == d ? AppColors.accent : p.dimmer,
-                  size: 19),
-              title: Text(d, style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: p.text)),
-            ),
-          const SizedBox(height: 8),
-        ]),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.7),
+          child: SingleChildScrollView(
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              const SizedBox(height: 10),
+              Container(width: 42, height: 4, decoration: BoxDecoration(color: p.line, borderRadius: BorderRadius.circular(2))),
+              const SizedBox(height: 8),
+              for (final d in ufDistributors[st.uf] ?? [])
+                ListTile(
+                  onTap: () {
+                    st.setDistributor(d);
+                    Navigator.pop(context);
+                    showToast(context, 'Distribuidora: $d');
+                  },
+                  leading: Icon(
+                      st.distributor == d ? Icons.check_circle_rounded : Icons.circle_outlined,
+                      color: st.distributor == d ? AppColors.accent : p.dimmer,
+                      size: 19),
+                  title: Text(d, style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: p.text)),
+                ),
+              const SizedBox(height: 8),
+            ]),
+          ),
+        ),
       ),
     );
   }

@@ -120,15 +120,12 @@ class ControlScreen extends StatelessWidget {
         ]),
       ),
       const SectionTitle('Oscilação'),
-      Row(children: [
+      Wrap(spacing: 8, runSpacing: 8, children: [
         for (final s in SWINGS)
-          Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: AppChip(label: s, on: d.swing == s, small: true, onTap: () {
-              d.swing = s;
-              st.touch();
-            }),
-          ),
+          AppChip(label: s, on: d.swing == s, small: true, onTap: () {
+            d.swing = s;
+            st.touch();
+          }),
       ]),
       const SectionTitle('Gerenciar'),
       AppCard(

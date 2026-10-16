@@ -240,15 +240,12 @@ class HomeScreen extends StatelessWidget {
         ),
         SectionTitleAction('${rooms.contains(st.room) ? st.room : "Todos"} · $onCount de ${inLoc.length} ligados',
             label: 'Novo dispositivo', onTap: () => _addDevice(context)),
-        Row(children: [
+        Wrap(spacing: 8, runSpacing: 8, children: [
           for (final r in rooms)
-            Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: AppChip(label: r, on: st.room == r, small: true, onTap: () {
-                st.room = r;
-                st.touch();
-              }),
-            ),
+            AppChip(label: r, on: st.room == r, small: true, onTap: () {
+              st.room = r;
+              st.touch();
+            }),
         ]),
         const SizedBox(height: 12),
         for (final d in list)
