@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
@@ -197,6 +198,7 @@ class AppState extends ChangeNotifier {
 
   /* ---------- persistência (volta à tela certa ao reabrir) ---------- */
   SharedPreferences? _prefs;
+  Timer? _weatherTimer;
 
   Future<void> init() async {
     try {
@@ -211,6 +213,10 @@ class AppState extends ChangeNotifier {
     } catch (_) {
       // estado corrompido? segue com os padrões
     }
+    // clima em tempo real: atualiza sozinho de 10 em 10 minutos
+    refreshWeather();
+    _weatherTimer?.cancel();
+    _weatherTimer = Timer.periodic(const Duration(minutes: 10), (_) => refreshWeather());
   }
 
   void _changed() {

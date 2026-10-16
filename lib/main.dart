@@ -32,8 +32,28 @@ class GreeApp extends StatefulWidget {
   State<GreeApp> createState() => _GreeAppState();
 }
 
-class _GreeAppState extends State<GreeApp> {
+class _GreeAppState extends State<GreeApp> with WidgetsBindingObserver {
   AppState get st => widget.st;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // volta do segundo plano: clima na hora, sem esperar o próximo ciclo
+    if (state == AppLifecycleState.resumed) {
+      st.refreshWeather();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
