@@ -217,7 +217,7 @@ class HomeScreen extends StatelessWidget {
                   const SizedBox(width: 14),
                   Expanded(
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text('${st.tempDisp(st.weatherTemp!)}°${st.unit} · ${st.tempAlt(st.weatherTemp!)} · ${WeatherNow.conditionOf(st.weatherCode ?? 2)}',
+                      Text('${st.tempDisp(st.weatherTemp!)}°${st.unit}${st.usesFahrenheit ? ' · ${st.tempAlt(st.weatherTemp!)}' : ''} · ${WeatherNow.conditionOf(st.weatherCode ?? 2)}',
                           style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: p.text)),
                       const SizedBox(height: 3),
                       Text('Umidade ${st.weatherHumidity!.round()}% · Sensação ${st.tempDisp(st.weatherFeels!)}°${st.unit}',

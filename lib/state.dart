@@ -187,6 +187,7 @@ class AppState extends ChangeNotifier {
 
   // localização / clima (detectados ou escolhidos pelo usuário)
   String city = '', uf = '';
+  String countryCode = 'br';
   double? lat, lon;
   String distributor = '';
   double baseTariff = 0; // R$/kWh (TE+TUSD) da ANEEL
@@ -258,6 +259,7 @@ class AppState extends ChangeNotifier {
         'tariff': tariff,
         'city': city,
         'uf': uf,
+        'countryCode': countryCode,
         'lat': lat,
         'lon': lon,
         'distributor': distributor,
@@ -295,6 +297,7 @@ class AppState extends ChangeNotifier {
     tariff = (j['tariff'] as num?)?.toDouble() ?? 0.92;
     city = j['city'] ?? '';
     uf = j['uf'] ?? '';
+    countryCode = (j['countryCode'] ?? 'br') as String;
     lat = (j['lat'] as num?)?.toDouble();
     lon = (j['lon'] as num?)?.toDouble();
     distributor = j['distributor'] ?? '';
@@ -377,6 +380,10 @@ class AppState extends ChangeNotifier {
 
   /* a outra unidade, para não se perder (ex.: viajando) */
   String tempAlt(num c) => unit == 'F' ? '${c.round()}°C' : '${(c * 9 / 5 + 32).round()}°F';
+
+  /* o °F secundário só aparece onde o país usa fahrenheit como padrão */
+  static const _fahrenheitCountries = {'us', 'bs', 'ky', 'lr', 'pw', 'fm', 'mh', 'vi', 'gu', 'as', 'pr', 'um'};
+  bool get usesFahrenheit => _fahrenheitCountries.contains(countryCode.toLowerCase());
 
   double tempFromDisplay(num v) => unit == 'F' ? (v - 32) * 5 / 9 : v.toDouble();
 
@@ -561,6 +568,7 @@ class AppState extends ChangeNotifier {
   Future<void> applyPlace(GeoPlace place) async {
     city = place.city;
     uf = place.uf;
+    countryCode = place.countryCode.isEmpty ? 'br' : place.countryCode.toLowerCase();
     lat = place.lat;
     lon = place.lon;
     _changed();

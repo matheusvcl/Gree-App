@@ -1,8 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gree_app/state.dart';
+import 'package:gree_app/services/remote.dart';
 
 void main() {
   unitTests();
+  fahrenheitLocationTests();
   group('Serialização', () {
     test('Device faz round-trip completo (incluindo LAN e rede)', () {
       final d = Device(
@@ -183,6 +185,30 @@ void unitTests() {
       st.toggleUnit();
       expect(st.dev.temp, 22);
       expect(st.unit, 'C');
+    });
+  });
+}
+
+void fahrenheitLocationTests() {
+  group('Fahrenheit só em países que usam', () {
+    test('regra por país', () {
+      final st = AppState(demo: true);
+      st.countryCode = 'br';
+      expect(st.usesFahrenheit, false);
+      st.countryCode = 'us';
+      expect(st.usesFahrenheit, true);
+      st.countryCode = 'BS'; // maiúsculas também contam
+      expect(st.usesFahrenheit, true);
+      st.countryCode = 'pt';
+      expect(st.usesFahrenheit, false);
+    });
+
+    test('applyPlace detecta o país', () async {
+      final st = AppState(demo: true);
+      await st.applyPlace(GeoPlace(city: 'Miami', uf: '', lat: 25.7, lon: -80.2, countryCode: 'us'));
+      expect(st.usesFahrenheit, true);
+      await st.applyPlace(GeoPlace(city: 'São Paulo', uf: 'SP', lat: -23.5, lon: -46.6, countryCode: 'br'));
+      expect(st.usesFahrenheit, false);
     });
   });
 }

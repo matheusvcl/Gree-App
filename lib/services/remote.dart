@@ -20,7 +20,8 @@ Map<String, String> get _ghHeaders => {
 class GeoPlace {
   final String city, uf;
   final double lat, lon;
-  GeoPlace({required this.city, required this.uf, required this.lat, required this.lon});
+  final String countryCode; // ISO (br, us, ...) — decide a unidade secundária
+  GeoPlace({required this.city, required this.uf, required this.lat, required this.lon, this.countryCode = 'br'});
 }
 
 class WeatherNow {
@@ -104,7 +105,7 @@ class Remote {
       final a = (j['address'] ?? {}) as Map<String, dynamic>;
       final city = (a['city'] ?? a['town'] ?? a['village'] ?? a['municipality'] ?? j['name'] ?? '') as String;
       final state = (a['state'] ?? '') as String;
-      return GeoPlace(city: city, uf: ufFromState(state), lat: lat, lon: lon);
+      return GeoPlace(city: city, uf: ufFromState(state), lat: lat, lon: lon, countryCode: (a['country_code'] ?? '') as String);
     } catch (_) {
       return null;
     }
@@ -128,6 +129,7 @@ class Remote {
             uf: ufFromState(((e['address'] ?? {})['state'] ?? '') as String),
             lat: double.tryParse('${e['lat']}') ?? 0,
             lon: double.tryParse('${e['lon']}') ?? 0,
+            countryCode: (((e['address'] ?? {})['country_code'] ?? 'br') as String).toLowerCase(),
           ),
       ];
     } catch (_) {
