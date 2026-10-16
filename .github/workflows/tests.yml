@@ -69,17 +69,17 @@ jobs:
             echo "::warning::Sem keystore nos secrets — pulando verificação de assinatura"
             exit 0
           fi
-          echo "$KEYSTORE_BASE64" | base64 -d > android/app/verifica-release.jks
-          cat > android/verifica.properties <<EOF
-          storeFile=verifica-release.jks
+          echo "$KEYSTORE_BASE64" | base64 -d > android/app/gree-release.jks
+          cat > android/key.properties <<EOF
+          storeFile=gree-release.jks
           storePassword=$KEYSTORE_PASSWORD
           keyAlias=$KEY_ALIAS
           keyPassword=$KEY_PASSWORD
           EOF
           flutter build apk --release
-          cp build/app/outputs/flutter-apk/app-release.apk /tmp/verifica.apk
-          "$ANDROID_HOME"/build-tools/*/apksigner verify --print-certs /tmp/verifica.apk | grep "certificate DN"
-          rm -f android/app/verifica-release.jks android/verifica.properties /tmp/verifica.apk
+          APKSIGNER=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
+          "$APKSIGNER" verify --print-certs build/app/outputs/flutter-apk/app-release.apk | grep "certificate DN"
+          rm -f android/app/gree-release.jks android/key.properties
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
