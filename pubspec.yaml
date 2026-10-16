@@ -39,6 +39,7 @@ dependencies:
   open_filex: ^5.0.0
   geolocator: ^14.1.1
   qr_flutter: ^4.1.0
+  pointycastle: ^4.0.0
 
 dev_dependencies:
   flutter_test:
