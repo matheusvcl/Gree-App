@@ -266,7 +266,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     var days = {...(s?.days ?? [1, 2, 3, 4, 5])};
     var cmd = s?.cmd ?? 'on';
     var mode = s?.mode ?? 'cool';
-    var temp = s?.temp ?? 22;
+    var temp = st.tempDisp(s?.temp ?? 22); // na unidade de exibição
 
     showModalBottomSheet(
       context: context,
@@ -399,7 +399,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                           mode: mode,
                           hour: hour,
                           minute: minute,
-                          temp: temp,
+                          temp: st.tempFromDisplay(temp).round(),
                           days: days.toList()..sort());
                       if (s == null) {
                         st.schedules.add(sched);
@@ -410,7 +410,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                             ..mode = mode
                             ..hour = hour
                             ..minute = minute
-                            ..temp = temp
+                            ..temp = st.tempFromDisplay(temp).round()
                             ..days = sched.days;
                         });
                       }

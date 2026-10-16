@@ -74,6 +74,20 @@ class ProfileScreen extends StatelessWidget {
           AppChip(label: 'Escuro', on: st.themeMode == 'dark', small: true, onTap: () => st.setTheme('dark')),
         ]),
       ),
+      const SizedBox(height: 10),
+      AppCard(
+        child: Row(children: [
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('Unidade de temperatura', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: p.text)),
+              Text('A conversão é automática em todo o app', style: TextStyle(fontSize: 11, color: p.dim)),
+            ]),
+          ),
+          AppChip(label: '°C', on: st.unit == 'C', small: true, onTap: () => st.setUnit('C')),
+          const SizedBox(width: 8),
+          AppChip(label: '°F', on: st.unit == 'F', small: true, onTap: () => st.setUnit('F')),
+        ]),
+      ),
       _row(context, Icons.system_update_rounded, 'Atualizações', 'Versão, verificação e o que mudou', () => st.go('updates')),
       _row(context, Icons.apps_rounded, 'Ícones', 'Ícone na tela inicial e no app drawer', () => st.go('icons')),
       _row(context, Icons.notifications_none_rounded, 'Notificações', 'Alertas e avisos', () => st.go('notifications')),
@@ -485,7 +499,7 @@ class FamilyScreen extends StatelessWidget {
                 'fan': 'Ventilar',
               }.entries)
                 AppChip(
-                  label: '${e.value} ${u.prefs.temps[e.key] ?? 22}°${st.unit}',
+                  label: '${e.value} ${st.tempDisp(u.prefs.temps[e.key] ?? 22)}°${st.unit}',
                   on: u.prefs.mode == e.key,
                   small: true,
                   onTap: () {

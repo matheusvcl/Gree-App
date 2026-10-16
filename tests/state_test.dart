@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:gree_app/state.dart';
 
 void main() {
+  unitTests();
   group('Serialização', () {
     test('Device faz round-trip completo (incluindo LAN e rede)', () {
       final d = Device(
@@ -146,6 +147,42 @@ void main() {
       st.touch();
       expect(notificacoes, 2);
       expect(st.screen, 'home');
+    });
+  });
+}
+
+void unitTests() {
+  group('Unidades de temperatura', () {
+    test('conversões C↔F', () {
+      final st = AppState(demo: true);
+      st.setUnit('C');
+      expect(st.tempDisp(22), 22);
+      expect(st.tempAlt(22), '72°F');
+      st.setUnit('F');
+      expect(st.tempDisp(22), 72);
+      expect(st.tempAlt(22), '22°C');
+      expect(st.tempFromDisplay(72).round(), 22);
+    });
+
+    test('setTemp converte para °C e respeita os limites do ar', () {
+      final st = AppState(demo: true);
+      st.setUnit('F');
+      st.setTemp(75); // 23,9°C
+      expect(st.dev.temp, 24);
+      st.setTemp(200); // fora da faixa → trava no máximo do ar
+      expect(st.dev.temp, 30);
+      st.setUnit('C');
+      st.setTemp(10);
+      expect(st.dev.temp, 16);
+    });
+
+    test('trocar unidade não mexe nos valores salvos', () {
+      final st = AppState(demo: true);
+      st.patchDev((d) => d.temp = 22);
+      st.toggleUnit();
+      st.toggleUnit();
+      expect(st.dev.temp, 22);
+      expect(st.unit, 'C');
     });
   });
 }

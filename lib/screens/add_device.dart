@@ -71,16 +71,16 @@ class _AddDeviceScreenState extends State<AddDeviceScreen> {
       const SizedBox(height: 8),
       Row(children: [
         _roundBtn(p, Icons.remove_rounded, () {
-          st.newDevTemp = (st.newDevTemp - 1).clamp(st.tempMin, st.tempMax);
+          st.newDevTemp = (st.newDevTemp - 1).clamp(16, 30);
           st.touch();
         }),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 18),
-          child: Text('${st.newDevTemp}°${st.unit}',
+          child: Text('${st.tempDisp(st.newDevTemp)}°${st.unit}',
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: p.text)),
         ),
         _roundBtn(p, Icons.add_rounded, () {
-          st.newDevTemp = (st.newDevTemp + 1).clamp(st.tempMin, st.tempMax);
+          st.newDevTemp = (st.newDevTemp + 1).clamp(16, 30);
           st.touch();
         }),
       ]),
