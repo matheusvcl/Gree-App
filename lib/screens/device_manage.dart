@@ -4,6 +4,7 @@ import '../state.dart';
 import '../widgets.dart';
 import '../services/gree_lan.dart';
 import 'device_pairing.dart';
+import 'device_about.dart';
 
 /* Gestão individual do aparelho: identidade, conexão LAN (vincular, testar,
    trocar rede) e reset. As ações falam com o protocolo Gree de verdade. */
@@ -214,6 +215,17 @@ class _DeviceManageScreenState extends State<DeviceManageScreen> {
             onTap: () => _wifiGuide(context),
           ),
         ]),
+      ),
+      const SectionTitle('Sobre'),
+      AppCard(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        child: _connRow(
+          p,
+          icon: Icons.info_outline_rounded,
+          title: 'Sobre o aparelho',
+          sub: 'Modelo, firmware e endereço de rede',
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => DeviceAboutScreen(st: st))),
+        ),
       ),
       const SectionTitle('Manutenção'),
       AppCard(

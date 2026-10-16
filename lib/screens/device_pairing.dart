@@ -63,6 +63,8 @@ class _DevicePairingScreenState extends State<DevicePairingScreen> {
       d.mac = dev.cid;
       d.lanKey = key;
       d.ip = dev.address;
+      d.fw = dev.ver;
+      d.model = dev.model;
       if (d.wifi.isEmpty) d.wifi = 'rede local';
     });
     setState(() {

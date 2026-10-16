@@ -250,31 +250,37 @@ class ActionBar extends StatelessWidget {
             ),
       child: Row(
         children: [
-          for (final a in actions)
-            Expanded(
-              child: GestureDetector(
-                onTap: a.onTap,
-                child: Container(
-                  height: 50,
-                  decoration: BoxDecoration(
-                    color: a.danger
-                        ? AppColors.danger
-                        : a.ghost
-                            ? p.surface2
-                            : AppColors.accent,
-                    borderRadius: BorderRadius.circular(22),
-                    border: a.ghost ? Border.all(color: p.line) : null,
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(a.label,
-                      style: TextStyle(
-                          fontSize: 13.5,
-                          fontWeight: FontWeight.w600,
-                          color: a.ghost ? p.text : Colors.white)),
-                ),
-              ),
-            ),
+          for (final (i, a) in actions.indexed)
+            if (i > 0) ...[
+              const SizedBox(width: 10),
+              Expanded(child: _actionButton(a, p)),
+            ] else
+              Expanded(child: _actionButton(a, p)),
         ],
+      ),
+    );
+  }
+
+  Widget _actionButton(ActionButton a, AppPalette p) {
+    return GestureDetector(
+      onTap: a.onTap,
+      child: Container(
+        height: 50,
+        decoration: BoxDecoration(
+          color: a.danger
+              ? AppColors.danger
+              : a.ghost
+                  ? p.surface2
+                  : AppColors.accent,
+          borderRadius: BorderRadius.circular(22),
+          border: a.ghost ? Border.all(color: p.line) : null,
+        ),
+        alignment: Alignment.center,
+        child: Text(a.label,
+            style: TextStyle(
+                fontSize: 13.5,
+                fontWeight: FontWeight.w600,
+                color: a.ghost ? p.text : Colors.white)),
       ),
     );
   }

@@ -18,14 +18,17 @@ class Device {
   String mac; // MAC do módulo Wi-Fi (vinculação LAN)
   String lanKey; // chave exclusiva do aparelho (protocolo Gree)
   String ip; // último IP conhecido
-  Device({required this.id, required this.name, required this.room, this.type = 'ar', this.on = false, this.temp = 22, this.fan = 2, this.mode = 'cool', this.swing = 'Fixo', this.locked = false, this.wifi = '', this.mac = '', this.lanKey = '', this.ip = ''});
+  String fw; // versão do firmware (do scan)
+  String model; // número do modelo (ID)
+  Device({required this.id, required this.name, required this.room, this.type = 'ar', this.on = false, this.temp = 22, this.fan = 2, this.mode = 'cool', this.swing = 'Fixo', this.locked = false, this.wifi = '', this.mac = '', this.lanKey = '', this.ip = '', this.fw = '', this.model = ''});
 
-  Map<String, dynamic> toJson() => {'id': id, 'name': name, 'room': room, 'type': type, 'on': on, 'temp': temp, 'fan': fan, 'mode': mode, 'swing': swing, 'locked': locked, 'wifi': wifi, 'mac': mac, 'lanKey': lanKey, 'ip': ip};
+  Map<String, dynamic> toJson() => {'id': id, 'name': name, 'room': room, 'type': type, 'on': on, 'temp': temp, 'fan': fan, 'mode': mode, 'swing': swing, 'locked': locked, 'wifi': wifi, 'mac': mac, 'lanKey': lanKey, 'ip': ip, 'fw': fw, 'model': model};
   factory Device.fromJson(Map<String, dynamic> j) => Device(
       id: j['id'], name: j['name'], room: j['room'], type: j['type'] ?? 'ar',
       on: j['on'] ?? false, temp: j['temp'] ?? 22, fan: j['fan'] ?? 2,
       mode: j['mode'] ?? 'cool', swing: j['swing'] ?? 'Fixo', locked: j['locked'] ?? false,
-      wifi: j['wifi'] ?? '', mac: j['mac'] ?? '', lanKey: j['lanKey'] ?? '', ip: j['ip'] ?? '');
+      wifi: j['wifi'] ?? '', mac: j['mac'] ?? '', lanKey: j['lanKey'] ?? '', ip: j['ip'] ?? '',
+      fw: j['fw'] ?? '', model: j['model'] ?? '');
 }
 
 class Schedule {
