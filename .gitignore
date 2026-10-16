@@ -71,3 +71,4 @@ worker/.cloudflare-token
 worker/.wrangler/
 coverage/
 test/failures/
+test/goldens/
