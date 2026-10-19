@@ -74,7 +74,6 @@
   "DEMEI": 0.76415,
   "DMED": 0.61757,
   "EAC": 0.82971,
-  "EBO": 0.53644,
   "EDP ES": 0.84371,
   "EDP SP": 0.7867,
   "EFLJC": 0.75975,
@@ -88,12 +87,11 @@
   "EMT": 0.89942,
   "ENEL CE": 0.70175,
   "ENEL RJ": 1.0611,
-  "ENF": 0.82193,
   "EPB": 0.7097,
   "EQUATORIAL AL": 0.85141,
   "EQUATORIAL GO": 0.89181,
   "EQUATORIAL MA": 0.88884,
-  "EQUATORIAL PA": 0.9783,
+  "EQUATORIAL PA": 1.04322,
   "EQUATORIAL PI": 0.94669,
   "ERO": 0.76244,
   "ESE": 0.75461,
@@ -109,8 +107,8 @@
   "RGE": 0.94461,
   "SULGIPE": 0.71881,
   "UHENPAL": 0.83515,
-  "ÂMBAR ENERGIA RR": 0.78947,
-  "Âmbar Amazonas": 0.87571
+  "Âmbar Amazonas": 0.87571,
+  "Âmbar Roraima": 0.78947
  },
- "updated": "2026-10-15"
+ "updated": "2026-10-19"
 }
